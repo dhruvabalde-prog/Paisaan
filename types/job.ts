@@ -1,4 +1,4 @@
-export type PlatformCategory = "gigs";
+export type PlatformCategory = "gigs" | "assets";
 
 export type GigSource =
   | "Upwork"
@@ -6,9 +6,23 @@ export type GigSource =
   | "Freelancer.com"
   | "RemoteOK"
   | "WeWorkRemotely"
-  | "Hacker News Jobs";
+  | "Hacker News Jobs"
+  | "Truelancer (India)"
+  | "TapChief (India)"
+  | "Hasjob (India)"
+  | "WorknHire (India)";
 
-export type JobSource = GigSource;
+export type AssetSource =
+  | "Acquire.com"
+  | "Microns.io"
+  | "Flippa"
+  | "SideProjectors"
+  | "CodeCanyon"
+  | "Gumroad / Lemon Squeezy"
+  | "Dukaan (India)"
+  | "Instamojo (India)";
+
+export type JobSource = GigSource | AssetSource;
 
 export type JobStatus = "New" | "Applied" | "Interviewing" | "Won" | "Skipped";
 
