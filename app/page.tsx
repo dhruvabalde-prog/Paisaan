@@ -8,7 +8,7 @@ import {
   ListFilter,
   Gauge,
   Zap,
-  TrendingDown,
+  Sparkles,
 } from "lucide-react";
 import { PaisaanLogo } from "@/components/PaisaanLogo";
 import { JobItem, JobStatus, ViewMode, DifficultyLevel, GigSource } from "@/types/job";
@@ -16,8 +16,8 @@ import { useJobStorage } from "@/hooks/useJobStorage";
 import { FolderSection } from "@/components/FolderSection";
 import { JobDetailPage } from "@/components/JobDetailPage";
 import { SettingsPage } from "@/components/SettingsPage";
-import { ChatTile } from "@/components/ChatTile";
-import { cn, extractNormalizedBudgetUSD } from "@/lib/utils";
+import { BigJobCard } from "@/components/BigJobCard";
+import { cn, parseBudgetUSD } from "@/lib/utils";
 
 const WORK_PLATFORMS: GigSource[] = [
   "Upwork",
@@ -47,8 +47,8 @@ export default function Dashboard() {
   const [activeJob, setActiveJob] = useState<JobItem | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // View Mode: 'easy_high_pay' (Main Home landing page) | 'platforms' | 'difficulty' | 'statuses'
-  const [activeView, setActiveView] = useState<ViewMode>("easy_high_pay");
+  // View Mode: 'easy' (Home / Landing) | 'platforms' | 'difficulty' | 'statuses'
+  const [activeView, setActiveView] = useState<ViewMode>("easy");
 
   // Search query
   const [searchQuery, setSearchQuery] = useState("");
@@ -176,13 +176,15 @@ export default function Dashboard() {
     );
   }, [jobs, searchQuery]);
 
-  // Landing Page: All "Easy" work arranged in descending order of payout (USD & INR normalized via forex)
-  const easyHighPayJobs = useMemo(() => {
+  // LANDING PAGE: All Easy Work arranged in descending order of payout (USD & INR normalized via live forex)
+  const rankedEasyJobs = useMemo(() => {
     const easyOnly = searchableJobs.filter((j) => (j.difficulty || "Easy") === "Easy");
     return [...easyOnly].sort((a, b) => {
-      const payA = extractNormalizedBudgetUSD(a.budget);
-      const payB = extractNormalizedBudgetUSD(b.budget);
-      return payB - payA; // Descending order: highest paying easy work first
+      const isIndianA = a.country === "IN" || a.source === "Truelancer" || a.source === "TapChief" || a.source === "Hasjob" || a.source === "WorknHire";
+      const isIndianB = b.country === "IN" || b.source === "Truelancer" || b.source === "TapChief" || b.source === "Hasjob" || b.source === "WorknHire";
+      const valA = parseBudgetUSD(a.budget, isIndianA);
+      const valB = parseBudgetUSD(b.budget, isIndianB);
+      return valB - valA; // Descending order: highest paying easy job on top
     });
   }, [searchableJobs]);
 
@@ -325,20 +327,20 @@ export default function Dashboard() {
       <main className="max-w-3xl mx-auto w-full flex-1 flex flex-col bg-white dark:bg-zinc-950 border-x border-zinc-200/80 dark:border-zinc-800/80 min-h-[calc(100vh-53px)]">
         {/* Top View Mode Pills Bar & Search Toolbar */}
         <div className="p-3 sm:p-4 border-b border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/60 dark:bg-zinc-900/40 space-y-3">
-          {/* Asana-style View Switcher Pills */}
+          {/* 4 View Switcher Pills: Easy Work (Landing) | Platforms | Difficulty | Statuses */}
           <div className="grid grid-cols-4 gap-1 p-1 rounded-2xl bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
             <button
-              onClick={() => setActiveView("easy_high_pay")}
+              onClick={() => setActiveView("easy")}
               className={cn(
                 "flex items-center justify-center gap-1.5 py-2 px-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
-                activeView === "easy_high_pay"
+                activeView === "easy"
                   ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
                   : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
               )}
-              title="Home: All Easy Work ranked by Highest Pay"
+              title="Home: All Easy Work ranked descending by payout"
             >
-              <Zap className="h-3.5 w-3.5 shrink-0 fill-emerald-500/20 text-emerald-500" />
-              <span className="truncate">Easy Money</span>
+              <Zap className="h-3.5 w-3.5 shrink-0 text-emerald-500 fill-emerald-500" />
+              <span className="truncate">Easy Work</span>
             </button>
 
             <button
@@ -403,46 +405,44 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              {/* DEFAULT LANDING VIEW: EASY MONEY (ALL EASY WORK RANKED DESCENDING BY HIGHEST PAY WITH FOREX) */}
-              {activeView === "easy_high_pay" && (
-                <div>
-                  {/* Banner summary for Easy High Pay */}
-                  <div className="px-4 py-3 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-emerald-500 fill-emerald-500/30" />
-                      <div>
-                        <span className="text-xs font-black tracking-tight text-zinc-900 dark:text-zinc-100">
-                          HIGH-PAYING EASY WORK
+              {/* PRIMARY LANDING PAGE: ALL EASY WORK RANKED DESCENDING BY PAYOUT */}
+              {activeView === "easy" && (
+                <div className="p-3.5 sm:p-5 flex flex-col gap-4">
+                  {/* Landing Header Banner */}
+                  <div className="flex items-center justify-between pb-1">
+                    <div>
+                      <h2 className="text-sm sm:text-base font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                        <span>Top Paying Easy Gigs</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          {rankedEasyJobs.length} live
                         </span>
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                          Ranked by highest compensation (USD & INR normalized via 1 USD ≈ ₹84 forex)
-                        </p>
-                      </div>
+                      </h2>
+                      <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                        Arranged in descending order of payout across global ($) and Indian (₹) markets.
+                      </p>
                     </div>
-                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-300 dark:border-emerald-800">
-                      {easyHighPayJobs.length} Easy Gigs
-                    </span>
+
+                    <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-zinc-500 bg-zinc-100 dark:bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                      <span>Forex: 1 USD ≈ 86.5 INR</span>
+                    </div>
                   </div>
 
-                  {/* List of Easy jobs sorted highest pay down */}
-                  {easyHighPayJobs.length === 0 ? (
-                    <div className="py-12 text-center text-xs text-zinc-400">
-                      No matching easy gigs found.
+                  {/* Bigger Tiles Grid with More Details */}
+                  {rankedEasyJobs.length === 0 ? (
+                    <div className="py-16 text-center text-xs text-zinc-400">
+                      No easy jobs match your search query.
                     </div>
                   ) : (
-                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
-                      {easyHighPayJobs.map((job, idx) => (
-                        <div key={job.id} className="relative">
-                          {/* Rank number badge #1, #2, #3 */}
-                          <div className="absolute left-1.5 top-1.5 z-10 text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 bg-white/80 dark:bg-zinc-900/80 px-1 rounded shadow-2xs">
-                            #{idx + 1}
-                          </div>
-                          <ChatTile
-                            job={job}
-                            tracked={trackedJobs[job.id]}
-                            onSelect={setActiveJob}
-                          />
-                        </div>
+                    <div className="grid grid-cols-1 gap-3.5">
+                      {rankedEasyJobs.map((job, idx) => (
+                        <BigJobCard
+                          key={job.id}
+                          job={job}
+                          rank={idx + 1}
+                          tracked={trackedJobs[job.id]}
+                          onSelect={setActiveJob}
+                          onStatusChange={setStatus}
+                        />
                       ))}
                     </div>
                   )}

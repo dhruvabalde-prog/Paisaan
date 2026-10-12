@@ -72,7 +72,7 @@ export interface TrackedJobData {
   updatedAt: string;
 }
 
-export type ViewMode = "easy_high_pay" | "platforms" | "difficulty" | "statuses";
+export type ViewMode = "easy" | "platforms" | "difficulty" | "statuses";
 
 export interface PlatformMeta {
   name: string;
