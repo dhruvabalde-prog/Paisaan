@@ -9,14 +9,17 @@ import {
   Gauge,
   Zap,
   Sparkles,
+  SlidersHorizontal,
 } from "lucide-react";
 import { PaisaanLogo } from "@/components/PaisaanLogo";
-import { JobItem, JobStatus, ViewMode, DifficultyLevel, GigSource } from "@/types/job";
+import { JobItem, JobStatus, ViewMode, DifficultyLevel, GigSource, FilterState } from "@/types/job";
 import { useJobStorage } from "@/hooks/useJobStorage";
 import { FolderSection } from "@/components/FolderSection";
 import { JobDetailPage } from "@/components/JobDetailPage";
 import { SettingsPage } from "@/components/SettingsPage";
 import { BigJobCard } from "@/components/BigJobCard";
+import { MyntraFilterModal } from "@/components/MyntraFilterModal";
+import { filterJobs, countActiveFilters, DEFAULT_FILTERS } from "@/lib/filters";
 import { cn, parseBudgetUSD } from "@/lib/utils";
 
 const WORK_PLATFORMS: GigSource[] = [
@@ -52,6 +55,10 @@ export default function Dashboard() {
 
   // Search query
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Myntra-style Filter Engine State
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   // User profile
   const [userGoogle, setUserGoogle] = useState<{
@@ -163,18 +170,28 @@ export default function Dashboard() {
     broadcastReload();
   };
 
-  // Filter listings based on search query
+  // Active filter count for badge
+  const activeFilterCount = useMemo(() => countActiveFilters(filters), [filters]);
+
+  // 1. Filter listings based on Myntra Filter Engine
+  const filterMatchedJobs = useMemo(() => {
+    return filterJobs(jobs, filters, trackedJobs);
+  }, [jobs, filters, trackedJobs]);
+
+  // 2. Filter listings based on text search query
   const searchableJobs = useMemo(() => {
-    if (!searchQuery.trim()) return jobs;
+    if (!searchQuery.trim()) return filterMatchedJobs;
     const q = searchQuery.toLowerCase();
-    return jobs.filter(
+    return filterMatchedJobs.filter(
       (j) =>
         j.title.toLowerCase().includes(q) ||
         j.description.toLowerCase().includes(q) ||
         j.source.toLowerCase().includes(q) ||
-        j.budget.toLowerCase().includes(q)
+        j.budget.toLowerCase().includes(q) ||
+        (j.workType && j.workType.toLowerCase().includes(q)) ||
+        (j.workMode && j.workMode.toLowerCase().includes(q))
     );
-  }, [jobs, searchQuery]);
+  }, [filterMatchedJobs, searchQuery]);
 
   // LANDING PAGE: All Easy Work arranged in descending order of payout (USD & INR normalized via live forex)
   const rankedEasyJobs = useMemo(() => {
@@ -327,73 +344,151 @@ export default function Dashboard() {
       <main className="max-w-3xl mx-auto w-full flex-1 flex flex-col bg-white dark:bg-zinc-950 border-x border-zinc-200/80 dark:border-zinc-800/80 min-h-[calc(100vh-53px)]">
         {/* Top View Mode Pills Bar & Search Toolbar */}
         <div className="p-3 sm:p-4 border-b border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/60 dark:bg-zinc-900/40 space-y-3">
-          {/* 4 View Switcher Pills: Easy Work (Landing) | Platforms | Difficulty | Statuses */}
-          <div className="grid grid-cols-4 gap-1 p-1 rounded-2xl bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+          {/* 4 View Switcher Tabs: Scrollable, unlocked, and 100% readable on mobile */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar select-none">
             <button
               onClick={() => setActiveView("easy")}
               className={cn(
-                "flex items-center justify-center gap-1.5 py-2 px-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                "flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer shrink-0 border",
                 activeView === "easy"
-                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-zinc-200 dark:border-zinc-700 shadow-xs"
+                  : "bg-zinc-100/70 dark:bg-zinc-900 border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
               )}
-              title="Home: All Easy Work ranked descending by payout"
             >
-              <Zap className="h-3.5 w-3.5 shrink-0 text-emerald-500 fill-emerald-500" />
-              <span className="truncate">Easy Work</span>
+              <Zap className="h-3.5 w-3.5 text-emerald-500 fill-emerald-500 shrink-0" />
+              <span>⚡ Easy Gigs (Home)</span>
             </button>
 
             <button
               onClick={() => setActiveView("platforms")}
               className={cn(
-                "flex items-center justify-center gap-1.5 py-2 px-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                "flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer shrink-0 border",
                 activeView === "platforms"
-                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-zinc-200 dark:border-zinc-700 shadow-xs"
+                  : "bg-zinc-100/70 dark:bg-zinc-900 border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
               )}
             >
               <FolderTree className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">Platforms</span>
+              <span>Platforms</span>
             </button>
 
             <button
               onClick={() => setActiveView("difficulty")}
               className={cn(
-                "flex items-center justify-center gap-1.5 py-2 px-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                "flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer shrink-0 border",
                 activeView === "difficulty"
-                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-zinc-200 dark:border-zinc-700 shadow-xs"
+                  : "bg-zinc-100/70 dark:bg-zinc-900 border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
               )}
             >
               <Gauge className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">Difficulty</span>
+              <span>Difficulty</span>
             </button>
 
             <button
               onClick={() => setActiveView("statuses")}
               className={cn(
-                "flex items-center justify-center gap-1.5 py-2 px-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                "flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer shrink-0 border",
                 activeView === "statuses"
-                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-zinc-200 dark:border-zinc-700 shadow-xs"
+                  : "bg-zinc-100/70 dark:bg-zinc-900 border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
               )}
             >
               <ListFilter className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">Statuses</span>
+              <span>Statuses</span>
             </button>
           </div>
 
-          {/* Search bar */}
-          <div className="relative">
-            <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-zinc-400" />
-            <input
-              type="text"
-              placeholder="Search across all client gigs & opportunities..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none shadow-xs"
-            />
+          {/* Search bar & Myntra Filters Trigger Row */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-zinc-400" />
+              <input
+                type="text"
+                placeholder="Search across gigs, tech stack, roles..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none shadow-xs"
+              />
+            </div>
+
+            {/* Myntra Filters Trigger Button */}
+            <button
+              onClick={() => setIsFiltersOpen(true)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer shrink-0 shadow-xs",
+                activeFilterCount > 0
+                  ? "bg-emerald-500 text-zinc-950 border-emerald-500 font-black shadow-emerald-500/20"
+                  : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-emerald-500/60 hover:text-emerald-500"
+              )}
+              title="Open Myntra-style Filters Page"
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="h-4.5 w-4.5 rounded-full bg-zinc-950 text-emerald-400 text-[10px] font-black flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
+
+          {/* Active Filter Chips Pill Ribbon (if any active) */}
+          {activeFilterCount > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
+              <span className="text-zinc-400 font-semibold shrink-0">Applied:</span>
+              {filters.workTypes.map((wt) => (
+                <span
+                  key={wt}
+                  onClick={() => setFilters({ ...filters, workTypes: filters.workTypes.filter((x) => x !== wt) })}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 cursor-pointer hover:bg-rose-50 hover:text-rose-600 shrink-0"
+                >
+                  {wt} ✕
+                </span>
+              ))}
+              {filters.workModes.map((wm) => (
+                <span
+                  key={wm}
+                  onClick={() => setFilters({ ...filters, workModes: filters.workModes.filter((x) => x !== wm) })}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-rose-50 hover:text-rose-600 shrink-0"
+                >
+                  {wm} ✕
+                </span>
+              ))}
+              {filters.countries.map((c) => (
+                <span
+                  key={c}
+                  onClick={() => setFilters({ ...filters, countries: filters.countries.filter((x) => x !== c) })}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 cursor-pointer shrink-0"
+                >
+                  {c === "IN" ? "🇮🇳 India" : "🇺🇸 USA / Global"} ✕
+                </span>
+              ))}
+              {filters.difficulties.map((d) => (
+                <span
+                  key={d}
+                  onClick={() => setFilters({ ...filters, difficulties: filters.difficulties.filter((x) => x !== d) })}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 cursor-pointer shrink-0"
+                >
+                  {d} ✕
+                </span>
+              ))}
+              {filters.openOnly && (
+                <span
+                  onClick={() => setFilters({ ...filters, openOnly: false })}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 cursor-pointer shrink-0"
+                >
+                  ● Open Only ✕
+                </span>
+              )}
+              <button
+                onClick={() => setFilters(DEFAULT_FILTERS)}
+                className="text-[11px] font-bold text-rose-500 hover:underline shrink-0 pl-1"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
         </div>
 
         {/* View Content Streams */}
@@ -531,6 +626,17 @@ export default function Dashboard() {
           )}
         </div>
       </main>
+
+      {/* Myntra-style Split-Pane Full Filter Page */}
+      <MyntraFilterModal
+        isOpen={isFiltersOpen}
+        onClose={() => setIsFiltersOpen(false)}
+        filters={filters}
+        onApply={(updated) => setFilters(updated)}
+        onReset={() => setFilters(DEFAULT_FILTERS)}
+        allJobs={jobs}
+        trackedJobs={trackedJobs}
+      />
     </div>
   );
 }

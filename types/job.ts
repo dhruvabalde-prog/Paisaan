@@ -30,6 +30,14 @@ export type DifficultyLevel = "Easy" | "Moderate" | "Hard";
 
 export type CountryCode = "IN" | "US" | "GLOBAL";
 
+export type WorkType = "Project-Based MVP" | "Freelance Sprint" | "Hourly Contract" | "Full-Time Role";
+
+export type WorkMode = "100% Remote" | "Hybrid" | "In-Office";
+
+export type EligibilityStrictness = "Open to All (Portfolio First)" | "Mid-Level (1+ Shipped Apps)" | "Strict (Senior Screening)";
+
+export type BuilderRole = "Vibe Coder (0-to-1 Fast Builder)";
+
 export interface JobItem {
   id: string;
   title: string;
@@ -43,6 +51,21 @@ export interface JobItem {
   difficulty: DifficultyLevel;
   country?: CountryCode;
   isOpen?: boolean; // Live opening vs Closed
+  workType?: WorkType;
+  workMode?: WorkMode;
+  eligibility?: EligibilityStrictness;
+  role?: BuilderRole;
+}
+
+export interface FilterState {
+  workTypes: WorkType[];
+  workModes: WorkMode[];
+  countries: CountryCode[];
+  difficulties: DifficultyLevel[];
+  platforms: GigSource[];
+  eligibilities: EligibilityStrictness[];
+  openOnly: boolean;
+  roles: BuilderRole[];
 }
 
 export interface AnalysisBlueprintScreen {

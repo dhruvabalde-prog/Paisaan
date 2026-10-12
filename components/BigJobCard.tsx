@@ -103,6 +103,20 @@ export function BigJobCard({
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
             🟢 Easy
           </span>
+
+          {/* Work Type chip */}
+          {job.workType && (
+            <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+              {job.workType}
+            </span>
+          )}
+
+          {/* Work Mode chip */}
+          {job.workMode && (
+            <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40">
+              {job.workMode}
+            </span>
+          )}
         </div>
 
         {/* Big Payout with Live Cross-Forex Conversion */}

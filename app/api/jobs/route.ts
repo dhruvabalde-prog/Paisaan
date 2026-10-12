@@ -477,7 +477,7 @@ export async function GET() {
     return true;
   });
 
-  // Ensure default isOpen and country tags on all jobs
+  // Ensure default isOpen, country, workType, workMode, and eligibility on all jobs
   const sanitizedJobs = uniqueJobs.map((j) => {
     const isIndian =
       j.source === "Truelancer" ||
@@ -485,10 +485,41 @@ export async function GET() {
       j.source === "Hasjob" ||
       j.source === "WorknHire" ||
       j.country === "IN";
+
+    const titleLower = `${j.title} ${j.description}`.toLowerCase();
+
+    // Determine Work Type
+    let workType: "Project-Based MVP" | "Freelance Sprint" | "Hourly Contract" | "Full-Time Role" = "Project-Based MVP";
+    if (j.budget.includes("/hr") || titleLower.includes("/hr") || titleLower.includes("hourly")) {
+      workType = "Hourly Contract";
+    } else if (titleLower.includes("full-time") || titleLower.includes("fulltime") || titleLower.includes("engineer -") || titleLower.includes("role")) {
+      workType = "Full-Time Role";
+    } else if (titleLower.includes("quick") || titleLower.includes("sprint") || titleLower.includes("fast") || titleLower.includes("days")) {
+      workType = "Freelance Sprint";
+    }
+
+    // Determine Work Mode
+    let workMode: "100% Remote" | "Hybrid" | "In-Office" = "100% Remote";
+    if (titleLower.includes("bangalore") || titleLower.includes("indiranagar") || titleLower.includes("mumbai") || titleLower.includes("delhi") || titleLower.includes("in office") || titleLower.includes("in-office")) {
+      workMode = titleLower.includes("hybrid") ? "Hybrid" : "In-Office";
+    }
+
+    // Determine Eligibility Strictness
+    let eligibility: "Open to All (Portfolio First)" | "Mid-Level (1+ Shipped Apps)" | "Strict (Senior Screening)" = "Open to All (Portfolio First)";
+    if (j.difficulty === "Hard" || titleLower.includes("senior") || titleLower.includes("5+ years") || titleLower.includes("legacy") || titleLower.includes("c++")) {
+      eligibility = "Strict (Senior Screening)";
+    } else if (j.difficulty === "Moderate" || titleLower.includes("expert") || titleLower.includes("experience")) {
+      eligibility = "Mid-Level (1+ Shipped Apps)";
+    }
+
     return {
       ...j,
       country: isIndian ? ("IN" as const) : ("US" as const),
       isOpen: j.isOpen !== undefined ? j.isOpen : true,
+      workType,
+      workMode,
+      eligibility,
+      role: "Vibe Coder (0-to-1 Fast Builder)" as const,
     };
   });
 
