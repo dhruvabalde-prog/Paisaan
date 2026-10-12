@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useMemo } from "react";
 import {
-  Banknote,
   RefreshCw,
   Search,
   FolderTree,
   ListFilter,
   Gauge,
 } from "lucide-react";
+import { PaisaanLogo } from "@/components/PaisaanLogo";
 import { JobItem, JobStatus, ViewMode, DifficultyLevel, GigSource } from "@/types/job";
 import { useJobStorage } from "@/hooks/useJobStorage";
 import { FolderSection } from "@/components/FolderSection";
@@ -194,15 +194,13 @@ export default function Dashboard() {
       {/* Clean Header */}
       <header className="sticky top-0 z-30 border-b border-zinc-200 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-3 sm:px-6 py-2.5">
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
-          {/* Brand Logo & Name with Banknote Icon */}
+          {/* Brand Logo & Name with crisp white & green money icon */}
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="flex items-center gap-2.5 group text-left p-1 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
             title="Open Settings & Profile"
           >
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform shrink-0">
-              <Banknote className="h-4 w-4 text-zinc-950 stroke-[2.5]" />
-            </div>
+            <PaisaanLogo className="h-8 w-8" />
             <div className="flex flex-col">
               <span className="text-base font-black tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">
                 PAISAAN
