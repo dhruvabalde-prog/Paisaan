@@ -108,9 +108,6 @@ export function JobDetailPage({
             href={job.url}
             target="_blank"
             rel="noreferrer"
-            onClick={() => {
-              if (currentStatus === "New") onStatusChange(job.id, "Applied");
-            }}
             className="flex items-center gap-1 text-xs font-bold text-zinc-950 bg-emerald-400 hover:bg-emerald-300 px-3 py-1.5 rounded-xl shadow-sm transition-colors"
           >
             <span>Open Link</span>

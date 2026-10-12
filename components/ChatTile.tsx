@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
-import { JobItem, JobStatus, TrackedJobData } from "@/types/job";
+import { JobItem, JobStatus, TrackedJobData, DifficultyLevel } from "@/types/job";
 import { cn } from "@/lib/utils";
 
 interface ChatTileProps {
@@ -49,13 +49,13 @@ export function ChatTile({ job, tracked, onSelect }: ChatTileProps) {
     }
   };
 
-  const statusBadge = {
-    New: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-    Applied: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-    Interviewing: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
-    Won: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-    Skipped: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border-zinc-500/20",
-  }[currentStatus];
+  const difficultyConfig: Record<DifficultyLevel, { color: string; label: string }> = {
+    Easy: { color: "bg-emerald-500 ring-emerald-500/30", label: "Easy" },
+    Moderate: { color: "bg-amber-500 ring-amber-500/30", label: "Moderate" },
+    Hard: { color: "bg-rose-500 ring-rose-500/30", label: "Hard" },
+  };
+
+  const diff = difficultyConfig[job.difficulty || "Easy"];
 
   return (
     <div
@@ -72,10 +72,10 @@ export function ChatTile({ job, tracked, onSelect }: ChatTileProps) {
         {getSourceInitial(job.source)}
       </div>
 
-      {/* Center: Main details (Heading, Platform Name, Budget) */}
+      {/* Center: Main details (Heading, Platform Name, Budget, Difficulty Button) */}
       <div className="flex-1 min-w-0 pr-1">
         <div className="flex items-center justify-between gap-2 mb-1">
-          {/* Platform name & category */}
+          {/* Platform name, category & difficulty indicator */}
           <div className="flex items-center gap-1.5 truncate">
             <span className="text-xs font-bold text-zinc-900 dark:text-zinc-200 truncate">
               {job.source}
@@ -83,6 +83,15 @@ export function ChatTile({ job, tracked, onSelect }: ChatTileProps) {
             <span className="text-[10px] text-zinc-400 dark:text-zinc-500">•</span>
             <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
               {job.budget}
+            </span>
+
+            {/* Difficulty Circular Badge */}
+            <span
+              className="flex items-center gap-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 pl-1"
+              title={`Difficulty: ${diff.label}`}
+            >
+              <span className={cn("h-2.5 w-2.5 rounded-full ring-2 shrink-0", diff.color)} />
+              <span className="hidden sm:inline-block">{diff.label}</span>
             </span>
           </div>
 
@@ -98,13 +107,8 @@ export function ChatTile({ job, tracked, onSelect }: ChatTileProps) {
             {job.title}
           </p>
 
-          {/* Status pill (subtle indicator) */}
-          <span
-            className={cn(
-              "text-[10px] font-semibold px-1.5 py-0.2 rounded border shrink-0 hidden sm:inline-block",
-              statusBadge
-            )}
-          >
+          {/* Status badge */}
+          <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded border shrink-0 hidden sm:inline-block border-zinc-200 dark:border-zinc-800 text-zinc-500">
             {currentStatus}
           </span>
         </div>

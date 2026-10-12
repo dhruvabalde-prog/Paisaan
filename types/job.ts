@@ -20,6 +20,8 @@ export type JobSource = GigSource | AssetSource;
 
 export type JobStatus = "New" | "Applied" | "Interviewing" | "Won" | "Skipped";
 
+export type DifficultyLevel = "Easy" | "Moderate" | "Hard";
+
 export interface JobItem {
   id: string;
   title: string;
@@ -30,6 +32,7 @@ export interface JobItem {
   url: string;
   publishedAt: string;
   dateGroup: string; // e.g. "2026-10-12"
+  difficulty: DifficultyLevel;
 }
 
 export interface AnalysisBlueprintScreen {
@@ -42,6 +45,7 @@ export interface JobAnalysis {
   red_flag_check: "PASS" | "FAIL";
   red_flag_reason?: string;
   match_score: number; // 1-10
+  difficulty?: DifficultyLevel;
   three_screen_blueprint: AnalysisBlueprintScreen[];
   client_pitch: string;
   v0_prompt: string;
@@ -57,7 +61,7 @@ export interface TrackedJobData {
   updatedAt: string;
 }
 
-export type ViewMode = "categories" | "platforms" | "statuses";
+export type ViewMode = "categories" | "platforms" | "statuses" | "difficulty";
 
 export interface PlatformMeta {
   name: string;
