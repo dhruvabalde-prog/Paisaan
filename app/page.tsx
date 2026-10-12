@@ -4,17 +4,13 @@ import { useState, useEffect, useMemo } from "react";
 import {
   RefreshCw,
   Search,
-  FolderTree,
-  ListFilter,
-  Gauge,
-  Zap,
-  Sparkles,
   SlidersHorizontal,
+  Flame,
+  RotateCcw,
 } from "lucide-react";
 import { PaisaanLogo } from "@/components/PaisaanLogo";
-import { JobItem, JobStatus, ViewMode, DifficultyLevel, GigSource, FilterState } from "@/types/job";
+import { JobItem, JobStatus, FilterState } from "@/types/job";
 import { useJobStorage } from "@/hooks/useJobStorage";
-import { FolderSection } from "@/components/FolderSection";
 import { JobDetailPage } from "@/components/JobDetailPage";
 import { SettingsPage } from "@/components/SettingsPage";
 import { BigJobCard } from "@/components/BigJobCard";
@@ -22,36 +18,11 @@ import { MyntraFilterModal } from "@/components/MyntraFilterModal";
 import { filterJobs, countActiveFilters, DEFAULT_FILTERS } from "@/lib/filters";
 import { cn, parseBudgetUSD } from "@/lib/utils";
 
-const WORK_PLATFORMS: GigSource[] = [
-  "Upwork",
-  "Contra",
-  "Freelancer.com",
-  "Truelancer",
-  "TapChief",
-  "Hasjob",
-  "WorknHire",
-  "RemoteOK",
-  "WeWorkRemotely",
-  "Hacker News Jobs",
-];
-
-const ALL_STATUS_NAMES: JobStatus[] = [
-  "New",
-  "Applied",
-  "Interviewing",
-  "Won",
-  "Skipped",
-  "Closed",
-];
-
 export default function Dashboard() {
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeJob, setActiveJob] = useState<JobItem | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  // View Mode: 'easy' (Home / Landing) | 'platforms' | 'difficulty' | 'statuses'
-  const [activeView, setActiveView] = useState<ViewMode>("easy");
 
   // Search query
   const [searchQuery, setSearchQuery] = useState("");
@@ -193,58 +164,26 @@ export default function Dashboard() {
     );
   }, [filterMatchedJobs, searchQuery]);
 
-  // LANDING PAGE: All Easy Work arranged in descending order of payout (USD & INR normalized via live forex)
-  const rankedEasyJobs = useMemo(() => {
-    const easyOnly = searchableJobs.filter((j) => (j.difficulty || "Easy") === "Easy");
-    return [...easyOnly].sort((a, b) => {
-      const isIndianA = a.country === "IN" || a.source === "Truelancer" || a.source === "TapChief" || a.source === "Hasjob" || a.source === "WorknHire";
-      const isIndianB = b.country === "IN" || b.source === "Truelancer" || b.source === "TapChief" || b.source === "Hasjob" || b.source === "WorknHire";
+  // 3. Normalized Forex Ranking: Sorted in descending order of payout
+  const rankedJobs = useMemo(() => {
+    return [...searchableJobs].sort((a, b) => {
+      const isIndianA =
+        a.country === "IN" ||
+        a.source === "Truelancer" ||
+        a.source === "TapChief" ||
+        a.source === "Hasjob" ||
+        a.source === "WorknHire";
+      const isIndianB =
+        b.country === "IN" ||
+        b.source === "Truelancer" ||
+        b.source === "TapChief" ||
+        b.source === "Hasjob" ||
+        b.source === "WorknHire";
       const valA = parseBudgetUSD(a.budget, isIndianA);
       const valB = parseBudgetUSD(b.budget, isIndianB);
-      return valB - valA; // Descending order: highest paying easy job on top
+      return valB - valA; // Highest paying job on top
     });
   }, [searchableJobs]);
-
-  // Groupings for View 1: Platforms View (Upwork, Contra, Freelancer, RemoteOK, WWR, HN)
-  const platformGroups = useMemo(() => {
-    const map: Record<string, JobItem[]> = {};
-    for (const name of WORK_PLATFORMS) {
-      map[name] = searchableJobs.filter((j) => j.source === name);
-    }
-    return map;
-  }, [searchableJobs]);
-
-  // Groupings for View 2: Difficulty View (Easy, Moderate, Hard)
-  const difficultyGroups = useMemo(() => {
-    const map: Record<DifficultyLevel, JobItem[]> = {
-      Easy: [],
-      Moderate: [],
-      Hard: [],
-    };
-    for (const j of searchableJobs) {
-      const diff = j.difficulty || "Easy";
-      map[diff].push(j);
-    }
-    return map;
-  }, [searchableJobs]);
-
-  // Groupings for View 3: Statuses View (New, Applied, Won, Skipped, Closed)
-  const statusGroups = useMemo(() => {
-    const map: Record<JobStatus, JobItem[]> = {
-      New: [],
-      Applied: [],
-      Interviewing: [],
-      Won: [],
-      Skipped: [],
-      Closed: [],
-    };
-    for (const j of searchableJobs) {
-      const isActuallyClosed = trackedJobs[j.id]?.isOpen === false || trackedJobs[j.id]?.status === "Closed" || j.isOpen === false;
-      const st = isActuallyClosed ? "Closed" : (trackedJobs[j.id]?.status || "New");
-      map[st].push(j);
-    }
-    return map;
-  }, [searchableJobs, trackedJobs]);
 
   // Count open and closed opportunities
   const liveStats = useMemo(() => {
@@ -295,7 +234,7 @@ export default function Dashboard() {
       {/* Clean Header */}
       <header className="sticky top-0 z-30 border-b border-zinc-200 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-3 sm:px-6 py-2.5">
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
-          {/* Brand Logo & Name with crisp white & green money icon */}
+          {/* Brand Logo & Name */}
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="flex items-center gap-2.5 group text-left p-1 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
@@ -340,66 +279,11 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Main Container */}
+      {/* Main Discovery Feed Container (Zero Clutter on Main Page) */}
       <main className="max-w-3xl mx-auto w-full flex-1 flex flex-col bg-white dark:bg-zinc-950 border-x border-zinc-200/80 dark:border-zinc-800/80 min-h-[calc(100vh-53px)]">
-        {/* Top View Mode Pills Bar & Search Toolbar */}
+        {/* Search Toolbar & Myntra Filters Trigger */}
         <div className="p-3 sm:p-4 border-b border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/60 dark:bg-zinc-900/40 space-y-3">
-          {/* 4 View Switcher Tabs: Scrollable, unlocked, and 100% readable on mobile */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar select-none">
-            <button
-              onClick={() => setActiveView("easy")}
-              className={cn(
-                "flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer shrink-0 border",
-                activeView === "easy"
-                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-zinc-200 dark:border-zinc-700 shadow-xs"
-                  : "bg-zinc-100/70 dark:bg-zinc-900 border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <Zap className="h-3.5 w-3.5 text-emerald-500 fill-emerald-500 shrink-0" />
-              <span>⚡ Easy Gigs (Home)</span>
-            </button>
-
-            <button
-              onClick={() => setActiveView("platforms")}
-              className={cn(
-                "flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer shrink-0 border",
-                activeView === "platforms"
-                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-zinc-200 dark:border-zinc-700 shadow-xs"
-                  : "bg-zinc-100/70 dark:bg-zinc-900 border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <FolderTree className="h-3.5 w-3.5 shrink-0" />
-              <span>Platforms</span>
-            </button>
-
-            <button
-              onClick={() => setActiveView("difficulty")}
-              className={cn(
-                "flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer shrink-0 border",
-                activeView === "difficulty"
-                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-zinc-200 dark:border-zinc-700 shadow-xs"
-                  : "bg-zinc-100/70 dark:bg-zinc-900 border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <Gauge className="h-3.5 w-3.5 shrink-0" />
-              <span>Difficulty</span>
-            </button>
-
-            <button
-              onClick={() => setActiveView("statuses")}
-              className={cn(
-                "flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer shrink-0 border",
-                activeView === "statuses"
-                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-zinc-200 dark:border-zinc-700 shadow-xs"
-                  : "bg-zinc-100/70 dark:bg-zinc-900 border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <ListFilter className="h-3.5 w-3.5 shrink-0" />
-              <span>Statuses</span>
-            </button>
-          </div>
-
-          {/* Search bar & Myntra Filters Trigger Row */}
+          {/* Search bar & Myntra Filters Trigger Button */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-zinc-400" />
@@ -408,40 +292,67 @@ export default function Dashboard() {
                 placeholder="Search across gigs, tech stack, roles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none shadow-xs"
+                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none shadow-xs"
               />
             </div>
 
-            {/* Myntra Filters Trigger Button */}
+            {/* Myntra Filters Trigger Button with Active Badge */}
             <button
               onClick={() => setIsFiltersOpen(true)}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer shrink-0 shadow-xs",
+                "flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 shadow-xs",
                 activeFilterCount > 0
                   ? "bg-emerald-500 text-zinc-950 border-emerald-500 font-black shadow-emerald-500/20"
                   : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-emerald-500/60 hover:text-emerald-500"
               )}
               title="Open Myntra-style Filters Page"
             >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
+              <SlidersHorizontal className="h-4 w-4" />
               <span>Filters</span>
               {activeFilterCount > 0 && (
-                <span className="h-4.5 w-4.5 rounded-full bg-zinc-950 text-emerald-400 text-[10px] font-black flex items-center justify-center">
+                <span className="h-5 w-5 rounded-full bg-zinc-950 text-emerald-400 text-[11px] font-black flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}
             </button>
           </div>
 
-          {/* Active Filter Chips Pill Ribbon (if any active) */}
+          {/* Active Filter Chips Ribbon (Quick removal) */}
           {activeFilterCount > 0 && (
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
               <span className="text-zinc-400 font-semibold shrink-0">Applied:</span>
+              {filters.countries.map((c) => (
+                <span
+                  key={c}
+                  onClick={() => setFilters({ ...filters, countries: filters.countries.filter((x) => x !== c) })}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-rose-50 hover:text-rose-600 shrink-0"
+                >
+                  {c === "IN" ? "🇮🇳 India (₹)" : "🇺🇸 Global / USA ($)"} ✕
+                </span>
+              ))}
+              {filters.platforms.map((plat) => (
+                <span
+                  key={plat}
+                  onClick={() => setFilters({ ...filters, platforms: filters.platforms.filter((x) => x !== plat) })}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-rose-50 hover:text-rose-600 shrink-0"
+                >
+                  {plat} ✕
+                </span>
+              ))}
+              {filters.difficulties.map((d) => (
+                <span
+                  key={d}
+                  onClick={() => setFilters({ ...filters, difficulties: filters.difficulties.filter((x) => x !== d) })}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-rose-50 hover:text-rose-600 shrink-0"
+                >
+                  {d} ✕
+                </span>
+              ))}
               {filters.workTypes.map((wt) => (
                 <span
                   key={wt}
                   onClick={() => setFilters({ ...filters, workTypes: filters.workTypes.filter((x) => x !== wt) })}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 cursor-pointer hover:bg-rose-50 hover:text-rose-600 shrink-0"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 cursor-pointer hover:bg-rose-50 hover:text-rose-600 shrink-0"
                 >
                   {wt} ✕
                 </span>
@@ -450,40 +361,40 @@ export default function Dashboard() {
                 <span
                   key={wm}
                   onClick={() => setFilters({ ...filters, workModes: filters.workModes.filter((x) => x !== wm) })}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-rose-50 hover:text-rose-600 shrink-0"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-rose-50 hover:text-rose-600 shrink-0"
                 >
                   {wm} ✕
                 </span>
               ))}
-              {filters.countries.map((c) => (
+              {filters.statuses.map((st) => (
                 <span
-                  key={c}
-                  onClick={() => setFilters({ ...filters, countries: filters.countries.filter((x) => x !== c) })}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 cursor-pointer shrink-0"
+                  key={st}
+                  onClick={() => setFilters({ ...filters, statuses: filters.statuses.filter((x) => x !== st) })}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-rose-50 hover:text-rose-600 shrink-0"
                 >
-                  {c === "IN" ? "🇮🇳 India" : "🇺🇸 USA / Global"} ✕
-                </span>
-              ))}
-              {filters.difficulties.map((d) => (
-                <span
-                  key={d}
-                  onClick={() => setFilters({ ...filters, difficulties: filters.difficulties.filter((x) => x !== d) })}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 cursor-pointer shrink-0"
-                >
-                  {d} ✕
+                  Status: {st} ✕
                 </span>
               ))}
               {filters.openOnly && (
                 <span
                   onClick={() => setFilters({ ...filters, openOnly: false })}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 cursor-pointer shrink-0"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 cursor-pointer hover:bg-rose-50 hover:text-rose-600 shrink-0"
                 >
                   ● Open Only ✕
                 </span>
               )}
+              {filters.roles.map((r) => (
+                <span
+                  key={r}
+                  onClick={() => setFilters({ ...filters, roles: filters.roles.filter((x) => x !== r) })}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-rose-50 hover:text-rose-600 shrink-0"
+                >
+                  Role: Vibe Coder ✕
+                </span>
+              ))}
               <button
                 onClick={() => setFilters(DEFAULT_FILTERS)}
-                className="text-[11px] font-bold text-rose-500 hover:underline shrink-0 pl-1"
+                className="text-[11px] font-bold text-rose-500 hover:underline shrink-0 pl-1 cursor-pointer"
               >
                 Clear all
               </button>
@@ -491,8 +402,8 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* View Content Streams */}
-        <div className="flex-1">
+        {/* Clean Feed Content */}
+        <div className="flex-1 p-3.5 sm:p-5 flex flex-col gap-4">
           {loading && jobs.length === 0 ? (
             <div className="py-24 flex flex-col items-center justify-center gap-2 text-zinc-400">
               <RefreshCw className="h-6 w-6 animate-spin text-emerald-500" />
@@ -500,126 +411,54 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              {/* PRIMARY LANDING PAGE: ALL EASY WORK RANKED DESCENDING BY PAYOUT */}
-              {activeView === "easy" && (
-                <div className="p-3.5 sm:p-5 flex flex-col gap-4">
-                  {/* Landing Header Banner */}
-                  <div className="flex items-center justify-between pb-1">
-                    <div>
-                      <h2 className="text-sm sm:text-base font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                        <span>Top Paying Easy Gigs</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                          {rankedEasyJobs.length} live
-                        </span>
-                      </h2>
-                      <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                        Arranged in descending order of payout across global ($) and Indian (₹) markets.
-                      </p>
-                    </div>
-
-                    <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-zinc-500 bg-zinc-100 dark:bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                      <span>Forex: 1 USD ≈ 86.5 INR</span>
-                    </div>
-                  </div>
-
-                  {/* Bigger Tiles Grid with More Details */}
-                  {rankedEasyJobs.length === 0 ? (
-                    <div className="py-16 text-center text-xs text-zinc-400">
-                      No easy jobs match your search query.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3.5">
-                      {rankedEasyJobs.map((job, idx) => (
-                        <BigJobCard
-                          key={job.id}
-                          job={job}
-                          rank={idx + 1}
-                          tracked={trackedJobs[job.id]}
-                          onSelect={setActiveJob}
-                          onStatusChange={setStatus}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* VIEW 1: PLATFORMS VIEW (Work Platforms Only) */}
-              {activeView === "platforms" && (
+              {/* Feed Header Banner */}
+              <div className="flex items-center justify-between pb-1 flex-wrap gap-2">
                 <div>
-                  {WORK_PLATFORMS.map((platName) => {
-                    const platJobs = platformGroups[platName] || [];
-                    return (
-                      <FolderSection
-                        key={platName}
-                        title={platName}
-                        count={platJobs.length}
-                        defaultOpen={platName === "Upwork" || platName === "Contra" || platName === "WeWorkRemotely"}
-                        jobs={platJobs}
-                        trackedJobs={trackedJobs}
-                        onSelectJob={setActiveJob}
-                      />
-                    );
-                  })}
+                  <h2 className="text-sm sm:text-base font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <span>{activeFilterCount > 0 ? "Filtered Opportunities" : "Top Paying Opportunities"}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      {rankedJobs.length} live
+                    </span>
+                  </h2>
+                  <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    Ranked by highest payout across global ($) and Indian (₹) markets.
+                  </p>
                 </div>
-              )}
 
-              {/* VIEW 2: DIFFICULTY VIEW (Easy, Moderate, Hard) */}
-              {activeView === "difficulty" && (
-                <div>
-                  <FolderSection
-                    title="Easy Tasks & Rapid MVPs"
-                    badge="Green • Fast turnaround"
-                    colorClass="bg-emerald-500"
-                    count={difficultyGroups.Easy.length}
-                    defaultOpen={true}
-                    jobs={difficultyGroups.Easy}
-                    trackedJobs={trackedJobs}
-                    onSelectJob={setActiveJob}
-                  />
-
-                  <FolderSection
-                    title="Moderate Applications"
-                    badge="Yellow • Fullstack & DB"
-                    colorClass="bg-amber-500"
-                    count={difficultyGroups.Moderate.length}
-                    defaultOpen={true}
-                    jobs={difficultyGroups.Moderate}
-                    trackedJobs={trackedJobs}
-                    onSelectJob={setActiveJob}
-                  />
-
-                  <FolderSection
-                    title="Hard & Complex Projects"
-                    badge="Red • High complexity"
-                    colorClass="bg-rose-500"
-                    count={difficultyGroups.Hard.length}
-                    defaultOpen={true}
-                    jobs={difficultyGroups.Hard}
-                    trackedJobs={trackedJobs}
-                    onSelectJob={setActiveJob}
-                  />
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-zinc-500 bg-zinc-100 dark:bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                  <span>Forex: 1 USD ≈ 86.5 INR</span>
                 </div>
-              )}
+              </div>
 
-              {/* VIEW 3: STATUSES VIEW (Pipeline Folders) */}
-              {activeView === "statuses" && (
-                <div>
-                  {ALL_STATUS_NAMES.map((st) => {
-                    const stJobs = statusGroups[st] || [];
-                    return (
-                      <FolderSection
-                        key={st}
-                        title={st}
-                        badge={st === "Won" ? "Revenue Log" : undefined}
-                        count={stJobs.length}
-                        defaultOpen={st === "New" || st === "Applied"}
-                        jobs={stJobs}
-                        trackedJobs={trackedJobs}
-                        onSelectJob={setActiveJob}
-                      />
-                    );
-                  })}
+              {/* Big Job Cards Grid */}
+              {rankedJobs.length === 0 ? (
+                <div className="py-20 text-center flex flex-col items-center justify-center gap-3">
+                  <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                    No opportunities match your current filters or search query.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setFilters(DEFAULT_FILTERS);
+                      setSearchQuery("");
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline px-3 py-1.5 rounded-lg border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/30 cursor-pointer"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    <span>Reset All Filters</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3.5">
+                  {rankedJobs.map((job, idx) => (
+                    <BigJobCard
+                      key={job.id}
+                      job={job}
+                      rank={idx + 1}
+                      tracked={trackedJobs[job.id]}
+                      onSelect={setActiveJob}
+                      onStatusChange={setStatus}
+                    />
+                  ))}
                 </div>
               )}
             </>

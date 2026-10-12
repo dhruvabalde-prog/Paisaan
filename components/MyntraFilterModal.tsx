@@ -1,7 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { X, RotateCcw, Check, Briefcase, Globe, DollarSign, Gauge, ShieldCheck, CheckCircle2, UserCheck } from "lucide-react";
+import { useState, useMemo } from "react";
+import {
+  X,
+  RotateCcw,
+  Check,
+  Briefcase,
+  Globe,
+  DollarSign,
+  Gauge,
+  ShieldCheck,
+  CheckCircle2,
+  UserCheck,
+  Building2,
+  FolderTree,
+} from "lucide-react";
 import {
   FilterState,
   WorkType,
@@ -10,6 +23,7 @@ import {
   DifficultyLevel,
   GigSource,
   EligibilityStrictness,
+  JobStatus,
   JobItem,
 } from "@/types/job";
 import {
@@ -18,9 +32,11 @@ import {
   ALL_COUNTRIES,
   ALL_DIFFICULTIES,
   ALL_ELIGIBILITIES,
-  ALL_PLATFORM_SOURCES,
+  ALL_STATUS_OPTIONS,
+  getDependentPlatforms,
   filterJobs,
   countActiveFilters,
+  getFacetCount,
 } from "@/lib/filters";
 import { cn } from "@/lib/utils";
 
@@ -35,11 +51,12 @@ interface MyntraFilterModalProps {
 }
 
 type FilterCategoryKey =
+  | "currency"
+  | "platforms"
+  | "difficulty"
   | "workType"
   | "workMode"
-  | "currency"
-  | "difficulty"
-  | "platforms"
+  | "statuses"
   | "eligibility"
   | "status"
   | "roles";
@@ -61,11 +78,29 @@ export function MyntraFilterModal({
   trackedJobs,
 }: MyntraFilterModalProps) {
   const [draft, setDraft] = useState<FilterState>(filters);
-  const [activeCategory, setActiveCategory] = useState<FilterCategoryKey>("workType");
+  const [activeCategory, setActiveCategory] = useState<FilterCategoryKey>("currency");
 
   if (!isOpen) return null;
 
   const categories: CategoryMeta[] = [
+    {
+      key: "currency",
+      label: "Country & Currency",
+      icon: DollarSign,
+      badgeCount: (f) => f.countries.length,
+    },
+    {
+      key: "platforms",
+      label: "Platforms (Dependent)",
+      icon: Building2,
+      badgeCount: (f) => f.platforms.length,
+    },
+    {
+      key: "difficulty",
+      label: "Difficulty Level",
+      icon: Gauge,
+      badgeCount: (f) => f.difficulties.length,
+    },
     {
       key: "workType",
       label: "Types of Work",
@@ -79,22 +114,10 @@ export function MyntraFilterModal({
       badgeCount: (f) => f.workModes.length,
     },
     {
-      key: "currency",
-      label: "Country & Currency",
-      icon: DollarSign,
-      badgeCount: (f) => f.countries.length,
-    },
-    {
-      key: "difficulty",
-      label: "Difficulty Level",
-      icon: Gauge,
-      badgeCount: (f) => f.difficulties.length,
-    },
-    {
-      key: "platforms",
-      label: "Platforms",
-      icon: Briefcase,
-      badgeCount: (f) => f.platforms.length,
+      key: "statuses",
+      label: "Pipeline Status",
+      icon: FolderTree,
+      badgeCount: (f) => f.statuses.length,
     },
     {
       key: "eligibility",
@@ -110,11 +133,14 @@ export function MyntraFilterModal({
     },
     {
       key: "roles",
-      label: "Roles",
+      label: "Role",
       icon: UserCheck,
       badgeCount: (f) => f.roles.length,
     },
   ];
+
+  // Dependent platforms list based on current country selection in draft
+  const availablePlatforms = getDependentPlatforms(draft.countries);
 
   // Live match preview count based on current draft
   const previewMatchCount = filterJobs(allJobs, draft, trackedJobs).length;
@@ -123,6 +149,18 @@ export function MyntraFilterModal({
   // Toggle helpers
   const toggleItem = <T,>(arr: T[], item: T): T[] => {
     return arr.includes(item) ? arr.filter((x) => x !== item) : [...arr, item];
+  };
+
+  const handleCountryToggle = (code: CountryCode) => {
+    const updatedCountries = toggleItem(draft.countries, code);
+    // Auto prune platforms that don't belong to the newly selected country
+    const validPlatforms = getDependentPlatforms(updatedCountries);
+    const prunedPlatforms = draft.platforms.filter((p) => validPlatforms.includes(p));
+    setDraft({
+      ...draft,
+      countries: updatedCountries,
+      platforms: prunedPlatforms,
+    });
   };
 
   const handleApply = () => {
@@ -139,6 +177,7 @@ export function MyntraFilterModal({
       difficulties: [],
       platforms: [],
       eligibilities: [],
+      statuses: [],
       openOnly: false,
       roles: [],
     });
@@ -146,7 +185,7 @@ export function MyntraFilterModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-zinc-950 w-full h-full sm:h-[85vh] sm:max-w-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col overflow-hidden">
+      <div className="bg-white dark:bg-zinc-950 w-full h-full sm:h-[88vh] sm:max-w-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col overflow-hidden">
         {/* Header Bar */}
         <div className="px-4 sm:px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/80 dark:bg-zinc-900/60">
           <div className="flex items-center gap-2">
@@ -154,7 +193,7 @@ export function MyntraFilterModal({
               Filter Opportunities
             </h2>
             {activeCount > 0 && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-zinc-950">
+              <span className="text-xs font-black px-2 py-0.5 rounded-full bg-emerald-500 text-zinc-950">
                 {activeCount} active
               </span>
             )}
@@ -166,7 +205,7 @@ export function MyntraFilterModal({
               className="text-xs font-bold text-zinc-500 hover:text-rose-500 dark:text-zinc-400 dark:hover:text-rose-400 flex items-center gap-1 px-2 py-1 rounded-lg transition-colors cursor-pointer"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              <span>Reset</span>
+              <span>Reset All</span>
             </button>
             <button
               onClick={onClose}
@@ -213,76 +252,24 @@ export function MyntraFilterModal({
 
           {/* Right Selection Content Pane */}
           <div className="flex-1 p-4 sm:p-6 overflow-y-auto bg-white dark:bg-zinc-950">
-            {/* 1. Types of Work */}
-            {activeCategory === "workType" && (
-              <div className="space-y-3">
-                <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
-                  Select Work Engagement
-                </h3>
-                {ALL_WORK_TYPES.map((wt) => {
-                  const checked = draft.workTypes.includes(wt);
-                  return (
-                    <label
-                      key={wt}
-                      onClick={() => setDraft({ ...draft, workTypes: toggleItem(draft.workTypes, wt) })}
-                      className={cn(
-                        "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none",
-                        checked
-                          ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
-                          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200"
-                      )}
-                    >
-                      <span className="text-xs sm:text-sm font-bold">{wt}</span>
-                      <div className={cn("h-5 w-5 rounded-md border flex items-center justify-center transition-colors", checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-300 dark:border-zinc-700")}>
-                        {checked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* 2. Work Mode (Location) */}
-            {activeCategory === "workMode" && (
-              <div className="space-y-3">
-                <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
-                  Location & Work Arrangement
-                </h3>
-                {ALL_WORK_MODES.map((wm) => {
-                  const checked = draft.workModes.includes(wm);
-                  return (
-                    <label
-                      key={wm}
-                      onClick={() => setDraft({ ...draft, workModes: toggleItem(draft.workModes, wm) })}
-                      className={cn(
-                        "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none",
-                        checked
-                          ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
-                          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200"
-                      )}
-                    >
-                      <span className="text-xs sm:text-sm font-bold">{wm}</span>
-                      <div className={cn("h-5 w-5 rounded-md border flex items-center justify-center transition-colors", checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-300 dark:border-zinc-700")}>
-                        {checked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* 3. Currency & Region */}
+            {/* 1. Currency & Country */}
             {activeCategory === "currency" && (
               <div className="space-y-3">
-                <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
-                  Payout Currency & Region
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
+                    Payout Currency & Region
+                  </h3>
+                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                    Affects available platforms
+                  </span>
+                </div>
                 {ALL_COUNTRIES.map((c) => {
                   const checked = draft.countries.includes(c.code);
+                  const count = getFacetCount(allJobs, draft, trackedJobs, "countries", c.code);
                   return (
                     <label
                       key={c.code}
-                      onClick={() => setDraft({ ...draft, countries: toggleItem(draft.countries, c.code) })}
+                      onClick={() => handleCountryToggle(c.code)}
                       className={cn(
                         "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none",
                         checked
@@ -293,6 +280,7 @@ export function MyntraFilterModal({
                       <div className="flex items-center gap-2">
                         <span className="text-base">{c.flag}</span>
                         <span className="text-xs sm:text-sm font-bold">{c.label}</span>
+                        <span className="text-xs text-zinc-400 font-normal">({count})</span>
                       </div>
                       <div className={cn("h-5 w-5 rounded-md border flex items-center justify-center transition-colors", checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-300 dark:border-zinc-700")}>
                         {checked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
@@ -303,48 +291,24 @@ export function MyntraFilterModal({
               </div>
             )}
 
-            {/* 4. Difficulty Level */}
-            {activeCategory === "difficulty" && (
-              <div className="space-y-3">
-                <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
-                  Difficulty Level
-                </h3>
-                {ALL_DIFFICULTIES.map((d) => {
-                  const checked = draft.difficulties.includes(d.level);
-                  return (
-                    <label
-                      key={d.level}
-                      onClick={() => setDraft({ ...draft, difficulties: toggleItem(draft.difficulties, d.level) })}
-                      className={cn(
-                        "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none",
-                        checked
-                          ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
-                          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200"
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>{d.badge}</span>
-                        <span className="text-xs sm:text-sm font-bold">{d.label}</span>
-                      </div>
-                      <div className={cn("h-5 w-5 rounded-md border flex items-center justify-center transition-colors", checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-300 dark:border-zinc-700")}>
-                        {checked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* 5. Platforms */}
+            {/* 2. Dependent Platforms */}
             {activeCategory === "platforms" && (
               <div className="space-y-3">
-                <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
-                  Source Platforms
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
+                    Source Platforms
+                  </h3>
+                  {draft.countries.length === 1 && (
+                    <span className="text-[11px] text-zinc-400 font-medium">
+                      Showing {draft.countries[0] === "IN" ? "🇮🇳 Indian" : "🇺🇸 Global"} platforms only
+                    </span>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {ALL_PLATFORM_SOURCES.map((plat) => {
+                  {availablePlatforms.map((plat) => {
                     const checked = draft.platforms.includes(plat);
                     const isIndian = plat === "Truelancer" || plat === "TapChief" || plat === "Hasjob" || plat === "WorknHire";
+                    const count = getFacetCount(allJobs, draft, trackedJobs, "platforms", plat);
                     return (
                       <label
                         key={plat}
@@ -359,6 +323,7 @@ export function MyntraFilterModal({
                         <div className="flex items-center gap-1.5 truncate">
                           <span className="text-xs">{isIndian ? "🇮🇳" : "🇺🇸"}</span>
                           <span className="text-xs font-bold truncate">{plat}</span>
+                          <span className="text-[11px] text-zinc-400 font-normal">({count})</span>
                         </div>
                         <div className={cn("h-4.5 w-4.5 rounded border flex items-center justify-center shrink-0 transition-colors", checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-300 dark:border-zinc-700")}>
                           {checked && <Check className="h-3 w-3 stroke-[3]" />}
@@ -370,7 +335,140 @@ export function MyntraFilterModal({
               </div>
             )}
 
-            {/* 6. Eligibility Criteria */}
+            {/* 3. Difficulty Level */}
+            {activeCategory === "difficulty" && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
+                  Difficulty Level
+                </h3>
+                {ALL_DIFFICULTIES.map((d) => {
+                  const checked = draft.difficulties.includes(d.level);
+                  const count = getFacetCount(allJobs, draft, trackedJobs, "difficulties", d.level);
+                  return (
+                    <label
+                      key={d.level}
+                      onClick={() => setDraft({ ...draft, difficulties: toggleItem(draft.difficulties, d.level) })}
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none",
+                        checked
+                          ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
+                          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{d.badge}</span>
+                        <span className="text-xs sm:text-sm font-bold">{d.label}</span>
+                        <span className="text-xs text-zinc-400 font-normal">({count})</span>
+                      </div>
+                      <div className={cn("h-5 w-5 rounded-md border flex items-center justify-center transition-colors", checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-300 dark:border-zinc-700")}>
+                        {checked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 4. Types of Work */}
+            {activeCategory === "workType" && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
+                  Select Work Engagement
+                </h3>
+                {ALL_WORK_TYPES.map((wt) => {
+                  const checked = draft.workTypes.includes(wt);
+                  const count = getFacetCount(allJobs, draft, trackedJobs, "workTypes", wt);
+                  return (
+                    <label
+                      key={wt}
+                      onClick={() => setDraft({ ...draft, workTypes: toggleItem(draft.workTypes, wt) })}
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none",
+                        checked
+                          ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
+                          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold">{wt}</span>
+                        <span className="text-xs text-zinc-400 font-normal">({count})</span>
+                      </div>
+                      <div className={cn("h-5 w-5 rounded-md border flex items-center justify-center transition-colors", checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-300 dark:border-zinc-700")}>
+                        {checked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 5. Work Mode (Location) */}
+            {activeCategory === "workMode" && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
+                  Location & Work Arrangement
+                </h3>
+                {ALL_WORK_MODES.map((wm) => {
+                  const checked = draft.workModes.includes(wm);
+                  const count = getFacetCount(allJobs, draft, trackedJobs, "workModes", wm);
+                  return (
+                    <label
+                      key={wm}
+                      onClick={() => setDraft({ ...draft, workModes: toggleItem(draft.workModes, wm) })}
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none",
+                        checked
+                          ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
+                          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold">{wm}</span>
+                        <span className="text-xs text-zinc-400 font-normal">({count})</span>
+                      </div>
+                      <div className={cn("h-5 w-5 rounded-md border flex items-center justify-center transition-colors", checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-300 dark:border-zinc-700")}>
+                        {checked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 6. Pipeline Status */}
+            {activeCategory === "statuses" && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
+                  Pipeline Status Folder
+                </h3>
+                {ALL_STATUS_OPTIONS.map((st) => {
+                  const checked = draft.statuses.includes(st);
+                  const count = getFacetCount(allJobs, draft, trackedJobs, "statuses", st);
+                  return (
+                    <label
+                      key={st}
+                      onClick={() => setDraft({ ...draft, statuses: toggleItem(draft.statuses, st) })}
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none",
+                        checked
+                          ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
+                          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold">{st}</span>
+                        <span className="text-xs text-zinc-400 font-normal">({count})</span>
+                      </div>
+                      <div className={cn("h-5 w-5 rounded-md border flex items-center justify-center transition-colors", checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-300 dark:border-zinc-700")}>
+                        {checked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 7. Eligibility Criteria */}
             {activeCategory === "eligibility" && (
               <div className="space-y-3">
                 <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
@@ -378,6 +476,7 @@ export function MyntraFilterModal({
                 </h3>
                 {ALL_ELIGIBILITIES.map((el) => {
                   const checked = draft.eligibilities.includes(el);
+                  const count = getFacetCount(allJobs, draft, trackedJobs, "eligibilities", el);
                   return (
                     <label
                       key={el}
@@ -389,7 +488,10 @@ export function MyntraFilterModal({
                           : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-200"
                       )}
                     >
-                      <span className="text-xs sm:text-sm font-bold">{el}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold">{el}</span>
+                        <span className="text-xs text-zinc-400 font-normal">({count})</span>
+                      </div>
                       <div className={cn("h-5 w-5 rounded-md border flex items-center justify-center transition-colors", checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-300 dark:border-zinc-700")}>
                         {checked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
                       </div>
@@ -399,7 +501,7 @@ export function MyntraFilterModal({
               </div>
             )}
 
-            {/* 7. Live Status */}
+            {/* 8. Live Status */}
             {activeCategory === "status" && (
               <div className="space-y-3">
                 <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
@@ -425,7 +527,7 @@ export function MyntraFilterModal({
               </div>
             )}
 
-            {/* 8. Roles */}
+            {/* 9. Roles */}
             {activeCategory === "roles" && (
               <div className="space-y-3">
                 <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
@@ -462,7 +564,7 @@ export function MyntraFilterModal({
 
         {/* Sticky Bottom Action Bar (Apply Button) */}
         <div className="p-3.5 sm:p-5 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 flex items-center justify-between gap-3">
-          <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+          <div className="text-xs font-bold text-zinc-500 dark:text-zinc-400">
             <span>{previewMatchCount} opportunities matching</span>
           </div>
 
@@ -475,7 +577,7 @@ export function MyntraFilterModal({
             </button>
             <button
               onClick={handleApply}
-              className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold text-zinc-950 bg-emerald-400 hover:bg-emerald-300 shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-black text-zinc-950 bg-emerald-400 hover:bg-emerald-300 shadow-md transition-all cursor-pointer flex items-center gap-1.5"
             >
               <span>Apply Filters</span>
               <span className="px-1.5 py-0.5 rounded-full bg-zinc-950 text-emerald-400 text-[10px]">

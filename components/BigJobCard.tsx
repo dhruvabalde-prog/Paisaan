@@ -100,9 +100,19 @@ export function BigJobCard({
           </div>
 
           {/* Difficulty pill */}
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-            🟢 Easy
-          </span>
+          {job.difficulty === "Hard" ? (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+              🔴 Hard
+            </span>
+          ) : job.difficulty === "Moderate" ? (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+              🟡 Moderate
+            </span>
+          ) : (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+              🟢 Easy
+            </span>
+          )}
 
           {/* Work Type chip */}
           {job.workType && (

@@ -64,6 +64,7 @@ export interface FilterState {
   difficulties: DifficultyLevel[];
   platforms: GigSource[];
   eligibilities: EligibilityStrictness[];
+  statuses: JobStatus[];
   openOnly: boolean;
   roles: BuilderRole[];
 }
