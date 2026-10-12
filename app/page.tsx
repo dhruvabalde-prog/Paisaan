@@ -62,7 +62,7 @@ export default function Dashboard() {
     setRevenue,
   } = useJobStorage();
 
-  // Load user session
+  // Load user session and listen for Supabase Google OAuth callback
   useEffect(() => {
     try {
       const stored = localStorage.getItem("paisaan_user_google");
@@ -70,6 +70,37 @@ export default function Dashboard() {
         setUserGoogle(JSON.parse(stored));
       }
     } catch {}
+
+    // Check Supabase session returned from Google OAuth
+    import("@/lib/supabase").then(({ supabase }) => {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session?.user) {
+          const u = {
+            name: data.session.user.user_metadata?.full_name || data.session.user.email?.split("@")[0] || "User",
+            email: data.session.user.email || "",
+            avatar: data.session.user.user_metadata?.avatar_url,
+          };
+          setUserGoogle(u);
+          localStorage.setItem("paisaan_user_google", JSON.stringify(u));
+        }
+      });
+
+      const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          const u = {
+            name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "User",
+            email: session.user.email || "",
+            avatar: session.user.user_metadata?.avatar_url,
+          };
+          setUserGoogle(u);
+          localStorage.setItem("paisaan_user_google", JSON.stringify(u));
+        }
+      });
+
+      return () => {
+        authListener.subscription.unsubscribe();
+      };
+    });
   }, []);
 
   const handleUserUpdate = (u: { name: string; email: string; avatar?: string } | null) => {

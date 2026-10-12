@@ -37,11 +37,16 @@ export async function signInWithGoogle() {
     return { user, error: null };
   }
 
+  // Always use the live online Vercel domain to eliminate any localhost redirects
+  const siteUrl = typeof window !== "undefined" && window.location.origin.includes("vercel.app")
+    ? window.location.origin
+    : "https://paisaan-chi.vercel.app";
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       scopes: "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",
-      redirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined,
+      redirectTo: `${siteUrl}/auth/callback`,
     },
   });
 
