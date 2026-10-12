@@ -93,34 +93,39 @@ export function SettingsPage({
           </div>
 
           {userGoogle ? (
-            <div className="flex items-center justify-between p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-emerald-500 text-zinc-950 font-bold flex items-center justify-center text-sm shadow-sm overflow-hidden">
-                  {userGoogle.avatar ? (
-                    <img src={userGoogle.avatar} alt="avatar" className="h-full w-full object-cover" />
-                  ) : (
-                    userGoogle.name.charAt(0)
-                  )}
-                </div>
-                <div>
-                  <div className="text-sm font-bold">{userGoogle.name}</div>
-                  <div className="text-xs text-zinc-500 flex items-center gap-1">
-                    <Mail className="h-3 w-3 text-emerald-500" />
-                    <span>{userGoogle.email}</span>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-emerald-500 text-zinc-950 font-bold flex items-center justify-center text-sm shadow-sm overflow-hidden">
+                    {userGoogle.avatar ? (
+                      <img src={userGoogle.avatar} alt="avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      userGoogle.name.charAt(0)
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold">{userGoogle.name}</div>
+                    <div className="text-xs text-zinc-500 flex items-center gap-1">
+                      <Mail className="h-3 w-3 text-emerald-500" />
+                      <span>{userGoogle.email}</span>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Once authenticated, the Connect button transforms directly into Disconnect button */}
               <button
                 onClick={handleGoogleDisconnect}
-                className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline px-3 py-1.5"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/70 text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400 shadow-sm transition-colors cursor-pointer"
               >
-                <LogOut className="h-3.5 w-3.5" /> Sign Out
+                <LogOut className="h-4 w-4" />
+                <span>Disconnect Google Account</span>
               </button>
             </div>
           ) : (
             <button
               onClick={handleGoogleConnect}
-              className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-950 dark:hover:bg-zinc-900 text-xs sm:text-sm font-bold shadow-sm transition-colors"
+              className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-950 dark:hover:bg-zinc-900 text-xs sm:text-sm font-bold shadow-sm transition-colors cursor-pointer"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24">
                 <path
@@ -140,7 +145,7 @@ export function SettingsPage({
                   d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.27 6.61l4.01 3.13c.95-2.84 3.6-4.99 6.72-4.99z"
                 />
               </svg>
-              <span>Connect Google (OAuth & Gmail Permissions)</span>
+              <span>Connect Google</span>
             </button>
           )}
         </section>
