@@ -204,14 +204,16 @@ const REAL_WORK_OPPORTUNITIES: JobItem[] = [
     difficulty: "Moderate",
   },
 
-  // 4. Truelancer (India) - Domestic Freelance Work in ₹ INR
+  // 4. Truelancer - Domestic Freelance Work in ₹ INR
   {
     id: "true-in-nextjs-ecommerce",
     title: "Next.js & Supabase Storefront with Razorpay Payment Gateway",
     description: "Indian apparel brand needs a modern responsive e-commerce web app built on Next.js 15, Tailwind, and Supabase. Razorpay webhook integration and order confirmation WhatsApp notifications required.",
     budget: "₹45,000",
-    source: "Truelancer (India)",
+    source: "Truelancer",
     category: "gigs",
+    country: "IN",
+    isOpen: true,
     url: "https://www.truelancer.com/freelance-jobs/next-js",
     publishedAt: new Date(Date.now() - 3600 * 1000 * 2).toISOString(),
     dateGroup: new Date().toISOString().split("T")[0],
@@ -222,8 +224,10 @@ const REAL_WORK_OPPORTUNITIES: JobItem[] = [
     title: "OPD Booking & Doctor Appointment Web Portal for Clinic Chain",
     description: "Looking for an Indian developer to build a quick patient booking portal. Must have mobile-responsive UI, OTP authentication via SMS/WhatsApp, and clinic calendar slot booking.",
     budget: "₹35,000",
-    source: "Truelancer (India)",
+    source: "Truelancer",
     category: "gigs",
+    country: "IN",
+    isOpen: true,
     url: "https://www.truelancer.com/freelance-jobs/web-development",
     publishedAt: new Date(Date.now() - 3600 * 1000 * 4).toISOString(),
     dateGroup: new Date().toISOString().split("T")[0],
@@ -234,22 +238,26 @@ const REAL_WORK_OPPORTUNITIES: JobItem[] = [
     title: "Automated GST Invoice Generator & Tally XML Export Tool",
     description: "Need a lightweight desktop/web tool to parse invoice spreadsheets, calculate CGST/SGST/IGST, and output compliant XML for Tally import. Quick turnaround needed.",
     budget: "₹25,000",
-    source: "Truelancer (India)",
+    source: "Truelancer",
     category: "gigs",
+    country: "IN",
+    isOpen: true,
     url: "https://www.truelancer.com/freelance-jobs/reactjs",
     publishedAt: new Date(Date.now() - 3600 * 1000 * 7).toISOString(),
     dateGroup: new Date().toISOString().split("T")[0],
     difficulty: "Easy",
   },
 
-  // 5. TapChief (India) - High-Value Tech Consulting & Builder Contracts
+  // 5. TapChief - High-Value Tech Consulting & Builder Contracts
   {
     id: "tapchief-in-fintech-mvp",
     title: "Sprint Developer: Lending Tech KYC & Aadhaar Verification Flow",
     description: "Fintech startup in Bangalore seeking a contract builder to develop an Aadhaar eKYC onboarding sprint with DigiLocker API integration and bank statement PDF analyser.",
     budget: "₹1,20,000",
-    source: "TapChief (India)",
+    source: "TapChief",
     category: "gigs",
+    country: "IN",
+    isOpen: true,
     url: "https://www.tapchief.com",
     publishedAt: new Date(Date.now() - 3600 * 1000 * 3).toISOString(),
     dateGroup: new Date().toISOString().split("T")[0],
@@ -260,22 +268,26 @@ const REAL_WORK_OPPORTUNITIES: JobItem[] = [
     title: "Gemini / LLM Customer Support Copilot for D2C Brand",
     description: "D2C brand needs an AI copilot embedded into their web app to resolve customer order inquiries, fetch tracking from Shiprocket API, and draft support responses.",
     budget: "₹75,000",
-    source: "TapChief (India)",
+    source: "TapChief",
     category: "gigs",
+    country: "IN",
+    isOpen: true,
     url: "https://www.tapchief.com",
     publishedAt: new Date(Date.now() - 3600 * 1000 * 6).toISOString(),
     dateGroup: new Date().toISOString().split("T")[0],
     difficulty: "Moderate",
   },
 
-  // 6. Hasjob (India) - Tech Founder Direct Contracts & Gigs
+  // 6. Hasjob - Tech Founder Direct Contracts & Gigs
   {
     id: "hasjob-in-saas-frontend",
     title: "Contract Frontend Engineer: Modern Next.js Dashboard & Metrics UI",
     description: "Funded tech startup in Indiranagar, Bangalore hiring an independent contract engineer for 3-week design-to-code sprint using Tailwind CSS and React Server Components.",
     budget: "₹90,000",
-    source: "Hasjob (India)",
+    source: "Hasjob",
     category: "gigs",
+    country: "IN",
+    isOpen: true,
     url: "https://hasjob.co",
     publishedAt: new Date(Date.now() - 3600 * 1000 * 5).toISOString(),
     dateGroup: new Date().toISOString().split("T")[0],
@@ -286,22 +298,26 @@ const REAL_WORK_OPPORTUNITIES: JobItem[] = [
     title: "Real Estate Property Price Crawler & Daily Aggregation Pipeline",
     description: "Need a robust Node.js/Python crawler to aggregate real estate listings and plot price-per-sqft heatmaps on Mapbox. Automated daily cron execution required.",
     budget: "₹50,000",
-    source: "Hasjob (India)",
+    source: "Hasjob",
     category: "gigs",
+    country: "IN",
+    isOpen: false, // Sample closed opening
     url: "https://hasjob.co",
     publishedAt: new Date(Date.now() - 3600 * 1000 * 9).toISOString(),
     dateGroup: new Date().toISOString().split("T")[0],
     difficulty: "Moderate",
   },
 
-  // 7. WorknHire (India) - Domestic Business & Web Portal Gigs
+  // 7. WorknHire - Domestic Business & Web Portal Gigs
   {
     id: "worknhire-in-hotel-pms",
     title: "Property & Room Inventory Management Web App for Boutique Hotels",
     description: "Client needs a lightweight room booking and guest check-in portal with UPI QR code dynamic generation on checkout. Responsive mobile view is essential.",
     budget: "₹40,000",
-    source: "WorknHire (India)",
+    source: "WorknHire",
     category: "gigs",
+    country: "IN",
+    isOpen: true,
     url: "https://www.worknhire.com",
     publishedAt: new Date(Date.now() - 3600 * 1000 * 8).toISOString(),
     dateGroup: new Date().toISOString().split("T")[0],
@@ -461,12 +477,24 @@ export async function GET() {
     return true;
   });
 
-  // Sort descending by date
-  uniqueJobs.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  // Ensure default isOpen and country tags on all jobs
+  const sanitizedJobs = uniqueJobs.map((j) => {
+    const isIndian =
+      j.source === "Truelancer" ||
+      j.source === "TapChief" ||
+      j.source === "Hasjob" ||
+      j.source === "WorknHire" ||
+      j.country === "IN";
+    return {
+      ...j,
+      country: isIndian ? ("IN" as const) : ("US" as const),
+      isOpen: j.isOpen !== undefined ? j.isOpen : true,
+    };
+  });
 
   return NextResponse.json({
     success: true,
-    count: uniqueJobs.length,
-    jobs: uniqueJobs,
+    count: sanitizedJobs.length,
+    jobs: sanitizedJobs,
   });
 }

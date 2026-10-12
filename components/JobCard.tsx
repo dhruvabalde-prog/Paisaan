@@ -43,6 +43,7 @@ export function JobCard({ job, tracked, onSelect, onStatusChange }: JobCardProps
     Interviewing: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
     Won: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
     Skipped: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border-zinc-500/20",
+    Closed: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
   };
 
   return (

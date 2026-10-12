@@ -41,8 +41,11 @@ export function FolderSection({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                {title}
+              <span className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                {title.includes("Truelancer") || title.includes("TapChief") || title.includes("Hasjob") || title.includes("WorknHire") ? (
+                  <span className="text-sm select-none">🇮🇳</span>
+                ) : null}
+                <span>{title}</span>
               </span>
               {badge && (
                 <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-zinc-100 dark:bg-zinc-850 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800">

@@ -23,19 +23,21 @@ interface JobDetailPageProps {
   tracked?: TrackedJobData;
   onBack: () => void;
   onStatusChange: (id: string, status: JobStatus) => void;
+  onToggleOpen?: (id: string, isOpen: boolean) => void;
   onUpdateDemoUrl: (id: string, url: string) => void;
   onUpdateNotes: (id: string, notes: string) => void;
   onUpdateRevenue: (id: string, revenue: number) => void;
   onSaveAnalysis: (id: string, analysis: TrackedJobData["analysis"]) => void;
 }
 
-const STATUSES: JobStatus[] = ["New", "Applied", "Interviewing", "Won", "Skipped"];
+const STATUSES: JobStatus[] = ["New", "Applied", "Interviewing", "Won", "Skipped", "Closed"];
 
 export function JobDetailPage({
   job,
   tracked,
   onBack,
   onStatusChange,
+  onToggleOpen,
   onUpdateDemoUrl,
   onUpdateNotes,
   onUpdateRevenue,
@@ -135,9 +137,34 @@ export function JobDetailPage({
           </h1>
 
           <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-            <div className="flex items-center gap-1 text-sm sm:text-base font-extrabold text-emerald-600 dark:text-emerald-400">
-              <DollarSign className="h-4 w-4" />
-              <span>{job.budget}</span>
+            <div className="flex items-center gap-2">
+              {/* Currency & Budget */}
+              <div className="flex items-center gap-1.5 text-sm sm:text-base font-extrabold text-emerald-600 dark:text-emerald-400">
+                <span className="text-sm">{job.country === "IN" ? "🇮🇳" : "🇺🇸"}</span>
+                {job.country === "IN" || job.budget.includes("₹") ? (
+                  <span className="text-base font-black">₹</span>
+                ) : (
+                  <DollarSign className="h-4 w-4" />
+                )}
+                <span>{job.budget.replace(/^[$₹]/, "")}</span>
+              </div>
+
+              {/* Live Open / Closed Toggle Button */}
+              {onToggleOpen ? (
+                <button
+                  onClick={() => onToggleOpen(job.id, !(tracked?.isOpen ?? job.isOpen ?? true))}
+                  className={cn(
+                    "text-xs px-2.5 py-1 rounded-lg font-bold border transition-colors flex items-center gap-1 cursor-pointer",
+                    (tracked?.isOpen ?? job.isOpen ?? true)
+                      ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700"
+                  )}
+                  title="Toggle Open / Closed status"
+                >
+                  <span className={cn("h-2 w-2 rounded-full", (tracked?.isOpen ?? job.isOpen ?? true) ? "bg-emerald-500 animate-pulse" : "bg-zinc-400")} />
+                  <span>{(tracked?.isOpen ?? job.isOpen ?? true) ? "Live: Open" : "Closed"}</span>
+                </button>
+              ) : null}
             </div>
 
             {/* Status Switcher (Mobile Touch-Optimized) */}
@@ -147,9 +174,11 @@ export function JobDetailPage({
                   key={st}
                   onClick={() => onStatusChange(job.id, st)}
                   className={cn(
-                    "text-xs px-2.5 py-1.5 rounded-lg font-bold border transition-colors shrink-0",
+                    "text-xs px-2.5 py-1.5 rounded-lg font-bold border transition-colors shrink-0 cursor-pointer",
                     currentStatus === st
-                      ? "bg-emerald-500 text-zinc-950 border-emerald-500"
+                      ? st === "Closed"
+                        ? "bg-rose-500 text-white border-rose-500"
+                        : "bg-emerald-500 text-zinc-950 border-emerald-500"
                       : "border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
                   )}
                 >

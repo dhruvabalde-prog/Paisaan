@@ -75,8 +75,13 @@ export function ChatTile({ job, tracked, onSelect }: ChatTileProps) {
       {/* Center: Main details (Heading, Platform Name, Budget, Difficulty Button) */}
       <div className="flex-1 min-w-0 pr-1">
         <div className="flex items-center justify-between gap-2 mb-1">
-          {/* Platform name, category & difficulty indicator */}
+          {/* Platform name, country flag, category & difficulty indicator */}
           <div className="flex items-center gap-1.5 truncate">
+            {/* Country Flag Badge (🇮🇳 India / 🇺🇸 Global) */}
+            <span className="text-xs shrink-0 select-none" title={job.country === "IN" ? "India (₹ INR)" : "Global / USA ($)"}>
+              {job.country === "IN" ? "🇮🇳" : "🇺🇸"}
+            </span>
+
             <span className="text-xs font-bold text-zinc-900 dark:text-zinc-200 truncate">
               {job.source}
             </span>
@@ -93,6 +98,18 @@ export function ChatTile({ job, tracked, onSelect }: ChatTileProps) {
               <span className={cn("h-2.5 w-2.5 rounded-full ring-2 shrink-0", diff.color)} />
               <span className="hidden sm:inline-block">{diff.label}</span>
             </span>
+
+            {/* Live Open / Closed indicator badge */}
+            <span
+              className={cn(
+                "text-[9px] font-bold px-1.5 py-0.5 rounded-full border shrink-0",
+                (tracked?.isOpen ?? job.isOpen ?? true)
+                  ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700"
+              )}
+            >
+              {(tracked?.isOpen ?? job.isOpen ?? true) ? "● OPEN" : "✕ CLOSED"}
+            </span>
           </div>
 
           {/* Date of posting */}
@@ -103,7 +120,12 @@ export function ChatTile({ job, tracked, onSelect }: ChatTileProps) {
 
         {/* Main Job / Asset Heading */}
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs sm:text-sm font-medium text-zinc-800 dark:text-zinc-300 truncate leading-snug">
+          <p className={cn(
+            "text-xs sm:text-sm font-medium truncate leading-snug",
+            (tracked?.isOpen ?? job.isOpen ?? true)
+              ? "text-zinc-800 dark:text-zinc-300"
+              : "text-zinc-400 dark:text-zinc-500 line-through"
+          )}>
             {job.title}
           </p>
 

@@ -1,8 +1,10 @@
 import { PlatformMeta, GigSource } from "@/types/job";
 
-export const GIG_PLATFORMS: { name: GigSource; allowsSelling: boolean; allowsHiring: boolean; badgeBg: string; website: string; description: string }[] = [
+export const GIG_PLATFORMS: { name: GigSource; country: "IN" | "US" | "GLOBAL"; flag: string; allowsSelling: boolean; allowsHiring: boolean; badgeBg: string; website: string; description: string }[] = [
   {
     name: "Upwork",
+    country: "GLOBAL" as const,
+    flag: "🇺🇸",
     allowsSelling: false,
     allowsHiring: true,
     badgeBg: "bg-emerald-600",
@@ -11,6 +13,8 @@ export const GIG_PLATFORMS: { name: GigSource; allowsSelling: boolean; allowsHir
   },
   {
     name: "Contra",
+    country: "GLOBAL" as const,
+    flag: "🇺🇸",
     allowsSelling: false,
     allowsHiring: true,
     badgeBg: "bg-indigo-600",
@@ -19,6 +23,8 @@ export const GIG_PLATFORMS: { name: GigSource; allowsSelling: boolean; allowsHir
   },
   {
     name: "Freelancer.com",
+    country: "GLOBAL" as const,
+    flag: "🇺🇸",
     allowsSelling: false,
     allowsHiring: true,
     badgeBg: "bg-sky-600",
@@ -26,7 +32,9 @@ export const GIG_PLATFORMS: { name: GigSource; allowsSelling: boolean; allowsHir
     description: "Global job board for competitive software development projects, calculators, and client tasks.",
   },
   {
-    name: "Truelancer (India)",
+    name: "Truelancer",
+    country: "IN" as const,
+    flag: "🇮🇳",
     allowsSelling: false,
     allowsHiring: true,
     badgeBg: "bg-teal-600",
@@ -34,7 +42,9 @@ export const GIG_PLATFORMS: { name: GigSource; allowsSelling: boolean; allowsHir
     description: "India's leading domestic freelance marketplace. Direct client contracts, web apps & scripts paid in ₹ INR.",
   },
   {
-    name: "TapChief (India)",
+    name: "TapChief",
+    country: "IN" as const,
+    flag: "🇮🇳",
     allowsSelling: false,
     allowsHiring: true,
     badgeBg: "bg-amber-600",
@@ -42,7 +52,9 @@ export const GIG_PLATFORMS: { name: GigSource; allowsSelling: boolean; allowsHir
     description: "Premier network for Indian developers & tech consultants. High-value sprints paid directly in ₹ INR.",
   },
   {
-    name: "Hasjob (India)",
+    name: "Hasjob",
+    country: "IN" as const,
+    flag: "🇮🇳",
     allowsSelling: false,
     allowsHiring: true,
     badgeBg: "bg-red-600",
@@ -50,7 +62,9 @@ export const GIG_PLATFORMS: { name: GigSource; allowsSelling: boolean; allowsHir
     description: "HasGeek's curated job & contract board for tech founders in Bangalore, Delhi & Mumbai hiring in ₹ INR.",
   },
   {
-    name: "WorknHire (India)",
+    name: "WorknHire",
+    country: "IN" as const,
+    flag: "🇮🇳",
     allowsSelling: false,
     allowsHiring: true,
     badgeBg: "bg-cyan-600",
@@ -59,6 +73,8 @@ export const GIG_PLATFORMS: { name: GigSource; allowsSelling: boolean; allowsHir
   },
   {
     name: "RemoteOK",
+    country: "GLOBAL" as const,
+    flag: "🇺🇸",
     allowsSelling: false,
     allowsHiring: true,
     badgeBg: "bg-blue-600",
@@ -67,6 +83,8 @@ export const GIG_PLATFORMS: { name: GigSource; allowsSelling: boolean; allowsHir
   },
   {
     name: "WeWorkRemotely",
+    country: "GLOBAL" as const,
+    flag: "🇺🇸",
     allowsSelling: false,
     allowsHiring: true,
     badgeBg: "bg-rose-600",
@@ -75,6 +93,8 @@ export const GIG_PLATFORMS: { name: GigSource; allowsSelling: boolean; allowsHir
   },
   {
     name: "Hacker News Jobs",
+    country: "GLOBAL" as const,
+    flag: "🇺🇸",
     allowsSelling: false,
     allowsHiring: true,
     badgeBg: "bg-orange-600",

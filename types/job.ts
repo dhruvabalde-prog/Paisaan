@@ -7,10 +7,10 @@ export type GigSource =
   | "RemoteOK"
   | "WeWorkRemotely"
   | "Hacker News Jobs"
-  | "Truelancer (India)"
-  | "TapChief (India)"
-  | "Hasjob (India)"
-  | "WorknHire (India)";
+  | "Truelancer"
+  | "TapChief"
+  | "Hasjob"
+  | "WorknHire";
 
 export type AssetSource =
   | "Acquire.com"
@@ -19,14 +19,16 @@ export type AssetSource =
   | "SideProjectors"
   | "CodeCanyon"
   | "Gumroad / Lemon Squeezy"
-  | "Dukaan (India)"
-  | "Instamojo (India)";
+  | "Dukaan"
+  | "Instamojo";
 
 export type JobSource = GigSource | AssetSource;
 
-export type JobStatus = "New" | "Applied" | "Interviewing" | "Won" | "Skipped";
+export type JobStatus = "New" | "Applied" | "Interviewing" | "Won" | "Skipped" | "Closed";
 
 export type DifficultyLevel = "Easy" | "Moderate" | "Hard";
+
+export type CountryCode = "IN" | "US" | "GLOBAL";
 
 export interface JobItem {
   id: string;
@@ -39,6 +41,8 @@ export interface JobItem {
   publishedAt: string;
   dateGroup: string; // e.g. "2026-10-12"
   difficulty: DifficultyLevel;
+  country?: CountryCode;
+  isOpen?: boolean; // Live opening vs Closed
 }
 
 export interface AnalysisBlueprintScreen {
@@ -60,9 +64,10 @@ export interface JobAnalysis {
 
 export interface TrackedJobData {
   status: JobStatus;
+  isOpen?: boolean; // Live open vs closed status
   demoUrl?: string;
   notes?: string;
-  revenue?: number; // USD
+  revenue?: number; // In currency
   analysis?: JobAnalysis;
   updatedAt: string;
 }

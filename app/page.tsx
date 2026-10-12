@@ -20,10 +20,10 @@ const WORK_PLATFORMS: GigSource[] = [
   "Upwork",
   "Contra",
   "Freelancer.com",
-  "Truelancer (India)",
-  "TapChief (India)",
-  "Hasjob (India)",
-  "WorknHire (India)",
+  "Truelancer",
+  "TapChief",
+  "Hasjob",
+  "WorknHire",
   "RemoteOK",
   "WeWorkRemotely",
   "Hacker News Jobs",
@@ -35,6 +35,7 @@ const ALL_STATUS_NAMES: JobStatus[] = [
   "Interviewing",
   "Won",
   "Skipped",
+  "Closed",
 ];
 
 export default function Dashboard() {
@@ -60,11 +61,13 @@ export default function Dashboard() {
     trackedJobs,
     isHydrated,
     setStatus,
+    setIsOpen,
     setAnalysis,
     setDemoUrl,
     setNotes,
     setRevenue,
-  } = useJobStorage();
+    broadcastReload,
+  } = useJobStorage(userGoogle?.email);
 
   // Load user session and listen for Supabase Google OAuth callback
   useEffect(() => {
@@ -133,16 +136,29 @@ export default function Dashboard() {
     }
   };
 
-  // Re-fetch automatically on window focus
+  // Re-fetch automatically on window focus and on remote multi-device reload broadcast
   useEffect(() => {
     fetchJobs();
 
     const handleFocus = () => {
       fetchJobs();
     };
+    const handleRemoteReload = () => {
+      fetchJobs();
+    };
+
     window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
+    window.addEventListener("paisaan_remote_reload", handleRemoteReload);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("paisaan_remote_reload", handleRemoteReload);
+    };
   }, []);
+
+  const handleManualRefresh = () => {
+    fetchJobs();
+    broadcastReload();
+  };
 
   // Filter listings based on search query
   const searchableJobs = useMemo(() => {
@@ -180,7 +196,7 @@ export default function Dashboard() {
     return map;
   }, [searchableJobs]);
 
-  // Groupings for View 3: Statuses View (New, Applied, Won, etc.)
+  // Groupings for View 3: Statuses View (New, Applied, Won, Skipped, Closed)
   const statusGroups = useMemo(() => {
     const map: Record<JobStatus, JobItem[]> = {
       New: [],
@@ -188,12 +204,29 @@ export default function Dashboard() {
       Interviewing: [],
       Won: [],
       Skipped: [],
+      Closed: [],
     };
     for (const j of searchableJobs) {
-      const st = trackedJobs[j.id]?.status || "New";
+      const isActuallyClosed = trackedJobs[j.id]?.isOpen === false || trackedJobs[j.id]?.status === "Closed" || j.isOpen === false;
+      const st = isActuallyClosed ? "Closed" : (trackedJobs[j.id]?.status || "New");
       map[st].push(j);
     }
     return map;
+  }, [searchableJobs, trackedJobs]);
+
+  // Count open and closed opportunities
+  const liveStats = useMemo(() => {
+    let openCount = 0;
+    let closedCount = 0;
+    for (const j of searchableJobs) {
+      const isOpen = trackedJobs[j.id]?.isOpen ?? j.isOpen ?? true;
+      if (isOpen && trackedJobs[j.id]?.status !== "Closed") {
+        openCount++;
+      } else {
+        closedCount++;
+      }
+    }
+    return { openCount, closedCount };
   }, [searchableJobs, trackedJobs]);
 
   // Full-page Detail View
@@ -204,6 +237,7 @@ export default function Dashboard() {
         tracked={trackedJobs[activeJob.id]}
         onBack={() => setActiveJob(null)}
         onStatusChange={setStatus}
+        onToggleOpen={setIsOpen}
         onUpdateDemoUrl={setDemoUrl}
         onUpdateNotes={setNotes}
         onUpdateRevenue={setRevenue}
@@ -248,15 +282,29 @@ export default function Dashboard() {
             </div>
           </button>
 
-          {/* Refresh Button */}
-          <button
-            onClick={fetchJobs}
-            disabled={loading}
-            className="p-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:text-emerald-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer"
-            title="Refresh Listings"
-          >
-            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-          </button>
+          {/* Right Header: Live Openings Stat & Refresh Button */}
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 text-xs font-bold px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{liveStats.openCount} Open</span>
+              </span>
+              <span className="text-zinc-300 dark:text-zinc-700">|</span>
+              <span className="text-zinc-500 dark:text-zinc-400">
+                {liveStats.closedCount} Closed
+              </span>
+            </div>
+
+            {/* Refresh Button (Broadcasts to all devices) */}
+            <button
+              onClick={handleManualRefresh}
+              disabled={loading}
+              className="p-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:text-emerald-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer"
+              title="Refresh Listings & Sync Devices"
+            >
+              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+            </button>
+          </div>
         </div>
       </header>
 
