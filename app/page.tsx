@@ -5,31 +5,24 @@ import {
   Banknote,
   RefreshCw,
   Search,
-  Layers,
   FolderTree,
   ListFilter,
   Gauge,
 } from "lucide-react";
-import { JobItem, JobStatus, ViewMode, DifficultyLevel } from "@/types/job";
+import { JobItem, JobStatus, ViewMode, DifficultyLevel, GigSource } from "@/types/job";
 import { useJobStorage } from "@/hooks/useJobStorage";
 import { FolderSection } from "@/components/FolderSection";
 import { JobDetailPage } from "@/components/JobDetailPage";
 import { SettingsPage } from "@/components/SettingsPage";
 import { cn } from "@/lib/utils";
 
-const ALL_PLATFORM_NAMES = [
+const WORK_PLATFORMS: GigSource[] = [
   "Upwork",
   "Contra",
   "Freelancer.com",
   "RemoteOK",
   "WeWorkRemotely",
   "Hacker News Jobs",
-  "Acquire.com",
-  "Microns.io",
-  "Flippa",
-  "SideProjectors",
-  "CodeCanyon",
-  "Gumroad / Lemon Squeezy",
 ];
 
 const ALL_STATUS_NAMES: JobStatus[] = [
@@ -40,16 +33,14 @@ const ALL_STATUS_NAMES: JobStatus[] = [
   "Skipped",
 ];
 
-const ALL_DIFFICULTIES: DifficultyLevel[] = ["Easy", "Moderate", "Hard"];
-
 export default function Dashboard() {
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeJob, setActiveJob] = useState<JobItem | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // View Mode: 'categories' | 'platforms' | 'statuses' | 'difficulty'
-  const [activeView, setActiveView] = useState<ViewMode>("categories");
+  // View Mode: 'platforms' | 'difficulty' | 'statuses'
+  const [activeView, setActiveView] = useState<ViewMode>("platforms");
 
   // Search query
   const [searchQuery, setSearchQuery] = useState("");
@@ -107,7 +98,7 @@ export default function Dashboard() {
     }
   };
 
-  // Re-fetch automatically whenever the window regains focus or opens
+  // Re-fetch automatically on window focus
   useEffect(() => {
     fetchJobs();
 
@@ -131,23 +122,30 @@ export default function Dashboard() {
     );
   }, [jobs, searchQuery]);
 
-  // Groupings for View 1: Gigs & Asset Stores Folders
-  const categoryGroups = useMemo(() => {
-    const gigs = searchableJobs.filter((j) => j.category === "gigs");
-    const assets = searchableJobs.filter((j) => j.category === "assets");
-    return { gigs, assets };
-  }, [searchableJobs]);
-
-  // Groupings for View 2: Platform Folders
+  // Groupings for View 1: Platforms View (Upwork, Contra, Freelancer, RemoteOK, WWR, HN)
   const platformGroups = useMemo(() => {
     const map: Record<string, JobItem[]> = {};
-    for (const name of ALL_PLATFORM_NAMES) {
+    for (const name of WORK_PLATFORMS) {
       map[name] = searchableJobs.filter((j) => j.source === name);
     }
     return map;
   }, [searchableJobs]);
 
-  // Groupings for View 3: Status Folders
+  // Groupings for View 2: Difficulty View (Easy, Moderate, Hard)
+  const difficultyGroups = useMemo(() => {
+    const map: Record<DifficultyLevel, JobItem[]> = {
+      Easy: [],
+      Moderate: [],
+      Hard: [],
+    };
+    for (const j of searchableJobs) {
+      const diff = j.difficulty || "Easy";
+      map[diff].push(j);
+    }
+    return map;
+  }, [searchableJobs]);
+
+  // Groupings for View 3: Statuses View (New, Applied, Won, etc.)
   const statusGroups = useMemo(() => {
     const map: Record<JobStatus, JobItem[]> = {
       New: [],
@@ -163,21 +161,7 @@ export default function Dashboard() {
     return map;
   }, [searchableJobs, trackedJobs]);
 
-  // Groupings for View 4: Difficulty Folders (Easy, Moderate, Hard)
-  const difficultyGroups = useMemo(() => {
-    const map: Record<DifficultyLevel, JobItem[]> = {
-      Easy: [],
-      Moderate: [],
-      Hard: [],
-    };
-    for (const j of searchableJobs) {
-      const diff = j.difficulty || "Easy";
-      map[diff].push(j);
-    }
-    return map;
-  }, [searchableJobs]);
-
-  // If a listing is open, render Full-Page Job Detail View
+  // Full-page Detail View
   if (activeJob) {
     return (
       <JobDetailPage
@@ -193,7 +177,7 @@ export default function Dashboard() {
     );
   }
 
-  // If Settings is open, render Full-Page Settings View
+  // Full-page Settings View
   if (isSettingsOpen) {
     return (
       <SettingsPage
@@ -207,10 +191,10 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col font-sans transition-colors duration-200">
-      {/* Clean Minimalist Header */}
+      {/* Clean Header */}
       <header className="sticky top-0 z-30 border-b border-zinc-200 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-3 sm:px-6 py-2.5">
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
-          {/* Brand Logo & Name with Banknote Icon inside green symbol */}
+          {/* Brand Logo & Name with Banknote Icon */}
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="flex items-center gap-2.5 group text-left p-1 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
@@ -231,7 +215,7 @@ export default function Dashboard() {
             </div>
           </button>
 
-          {/* Refresh Button (Only symbol) */}
+          {/* Refresh Button */}
           <button
             onClick={fetchJobs}
             disabled={loading}
@@ -247,58 +231,45 @@ export default function Dashboard() {
       <main className="max-w-3xl mx-auto w-full flex-1 flex flex-col bg-white dark:bg-zinc-950 border-x border-zinc-200/80 dark:border-zinc-800/80 min-h-[calc(100vh-53px)]">
         {/* Top View Mode Pills Bar & Search Toolbar */}
         <div className="p-3 sm:p-4 border-b border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/60 dark:bg-zinc-900/40 space-y-3">
-          {/* Asana-style 4 View Switcher Pills */}
-          <div className="grid grid-cols-4 gap-1 p-1 rounded-2xl bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-            <button
-              onClick={() => setActiveView("categories")}
-              className={cn(
-                "flex items-center justify-center gap-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer",
-                activeView === "categories"
-                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <Layers className="h-3 w-3 shrink-0" />
-              <span className="truncate">Categories</span>
-            </button>
-
+          {/* Asana-style View Switcher Pills */}
+          <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
             <button
               onClick={() => setActiveView("platforms")}
               className={cn(
-                "flex items-center justify-center gap-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer",
+                "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
                 activeView === "platforms"
                   ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
                   : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
               )}
             >
-              <FolderTree className="h-3 w-3 shrink-0" />
+              <FolderTree className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">Platforms</span>
-            </button>
-
-            <button
-              onClick={() => setActiveView("statuses")}
-              className={cn(
-                "flex items-center justify-center gap-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer",
-                activeView === "statuses"
-                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
-              )}
-            >
-              <ListFilter className="h-3 w-3 shrink-0" />
-              <span className="truncate">Statuses</span>
             </button>
 
             <button
               onClick={() => setActiveView("difficulty")}
               className={cn(
-                "flex items-center justify-center gap-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer",
+                "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
                 activeView === "difficulty"
                   ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
                   : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
               )}
             >
-              <Gauge className="h-3 w-3 shrink-0" />
+              <Gauge className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">Difficulty</span>
+            </button>
+
+            <button
+              onClick={() => setActiveView("statuses")}
+              className={cn(
+                "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                activeView === "statuses"
+                  ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+              )}
+            >
+              <ListFilter className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Statuses</span>
             </button>
           </div>
 
@@ -307,7 +278,7 @@ export default function Dashboard() {
             <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-zinc-400" />
             <input
               type="text"
-              placeholder="Search across all opportunities & assets..."
+              placeholder="Search across all client gigs & opportunities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none shadow-xs"
@@ -320,47 +291,21 @@ export default function Dashboard() {
           {loading && jobs.length === 0 ? (
             <div className="py-24 flex flex-col items-center justify-center gap-2 text-zinc-400">
               <RefreshCw className="h-6 w-6 animate-spin text-emerald-500" />
-              <span className="text-xs font-semibold">Streaming opportunities...</span>
+              <span className="text-xs font-semibold">Streaming client opportunities...</span>
             </div>
           ) : (
             <>
-              {/* VIEW 1: CATEGORIES VIEW */}
-              {activeView === "categories" && (
-                <div>
-                  <FolderSection
-                    title="Gigs & Client Projects"
-                    badge="Clients Hiring"
-                    count={categoryGroups.gigs.length}
-                    defaultOpen={true}
-                    jobs={categoryGroups.gigs}
-                    trackedJobs={trackedJobs}
-                    onSelectJob={setActiveJob}
-                  />
-
-                  <FolderSection
-                    title="Asset Stores & Micro-SaaS"
-                    badge="Product Sales"
-                    count={categoryGroups.assets.length}
-                    defaultOpen={true}
-                    jobs={categoryGroups.assets}
-                    trackedJobs={trackedJobs}
-                    onSelectJob={setActiveJob}
-                  />
-                </div>
-              )}
-
-              {/* VIEW 2: PLATFORMS VIEW */}
+              {/* VIEW 1: PLATFORMS VIEW (Work Platforms Only) */}
               {activeView === "platforms" && (
                 <div>
-                  {ALL_PLATFORM_NAMES.map((platName) => {
+                  {WORK_PLATFORMS.map((platName) => {
                     const platJobs = platformGroups[platName] || [];
                     return (
                       <FolderSection
                         key={platName}
                         title={platName}
-                        badge={platName === "Contra" ? "Gigs + Assets" : undefined}
                         count={platJobs.length}
-                        defaultOpen={platName === "Upwork" || platName === "Acquire.com"}
+                        defaultOpen={platName === "Upwork" || platName === "Contra" || platName === "WeWorkRemotely"}
                         jobs={platJobs}
                         trackedJobs={trackedJobs}
                         onSelectJob={setActiveJob}
@@ -370,28 +315,7 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* VIEW 3: STATUSES VIEW */}
-              {activeView === "statuses" && (
-                <div>
-                  {ALL_STATUS_NAMES.map((st) => {
-                    const stJobs = statusGroups[st] || [];
-                    return (
-                      <FolderSection
-                        key={st}
-                        title={st}
-                        badge={st === "Won" ? "Revenue Log" : undefined}
-                        count={stJobs.length}
-                        defaultOpen={st === "New" || st === "Applied"}
-                        jobs={stJobs}
-                        trackedJobs={trackedJobs}
-                        onSelectJob={setActiveJob}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* VIEW 4: DIFFICULTY VIEW (Easy, Moderate, Hard) */}
+              {/* VIEW 2: DIFFICULTY VIEW (Easy, Moderate, Hard) */}
               {activeView === "difficulty" && (
                 <div>
                   <FolderSection
@@ -426,6 +350,27 @@ export default function Dashboard() {
                     trackedJobs={trackedJobs}
                     onSelectJob={setActiveJob}
                   />
+                </div>
+              )}
+
+              {/* VIEW 3: STATUSES VIEW (Pipeline Folders) */}
+              {activeView === "statuses" && (
+                <div>
+                  {ALL_STATUS_NAMES.map((st) => {
+                    const stJobs = statusGroups[st] || [];
+                    return (
+                      <FolderSection
+                        key={st}
+                        title={st}
+                        badge={st === "Won" ? "Revenue Log" : undefined}
+                        count={stJobs.length}
+                        defaultOpen={st === "New" || st === "Applied"}
+                        jobs={stJobs}
+                        trackedJobs={trackedJobs}
+                        onSelectJob={setActiveJob}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </>

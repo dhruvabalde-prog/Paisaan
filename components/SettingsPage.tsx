@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { exportJobsToCSV } from "@/lib/exportCsv";
-import { GIG_PLATFORMS, ASSET_PLATFORMS } from "@/lib/platforms";
+import { GIG_PLATFORMS } from "@/lib/platforms";
 import { useJobStorage } from "@/hooks/useJobStorage";
 import { JobItem } from "@/types/job";
 import { signInWithGoogle, signOutUser } from "@/lib/supabase";
@@ -216,10 +216,10 @@ export function SettingsPage({
             <span className="text-[11px] font-semibold text-zinc-500">12 Sources Available</span>
           </div>
 
-          {/* Category A: Gigs & Jobs */}
+          {/* Client Work & Gig Platforms */}
           <div className="space-y-3">
             <span className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              Category A: Gigs & Jobs (Clients Hiring You)
+              Verified Client Work Platforms
             </span>
             <div className="grid gap-2">
               {GIG_PLATFORMS.map((p) => (
@@ -232,11 +232,6 @@ export function SettingsPage({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs sm:text-sm font-bold">{p.name}</span>
-                        {p.allowsSelling && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400">
-                            Also Allows Product Selling
-                          </span>
-                        )}
                       </div>
                       <p className="text-[11px] text-zinc-500">{p.description}</p>
                     </div>
@@ -246,39 +241,6 @@ export function SettingsPage({
                     target="_blank"
                     rel="noreferrer"
                     className="text-zinc-400 hover:text-emerald-500 p-1"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Category B: Asset Stores */}
-          <div className="space-y-3 pt-2">
-            <span className="text-xs font-black uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
-              Category B: Asset Stores (You Selling Products)
-            </span>
-            <div className="grid gap-2">
-              {ASSET_PLATFORMS.map((p) => (
-                <div
-                  key={p.name}
-                  className="flex items-center justify-between p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className={`h-2.5 w-2.5 rounded-full ${p.badgeBg}`} />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-bold">{p.name}</span>
-                      </div>
-                      <p className="text-[11px] text-zinc-500">{p.description}</p>
-                    </div>
-                  </div>
-                  <a
-                    href={p.website}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-zinc-400 hover:text-cyan-500 p-1"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>

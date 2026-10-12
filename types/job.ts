@@ -1,4 +1,4 @@
-export type PlatformCategory = "gigs" | "assets";
+export type PlatformCategory = "gigs";
 
 export type GigSource =
   | "Upwork"
@@ -8,15 +8,7 @@ export type GigSource =
   | "WeWorkRemotely"
   | "Hacker News Jobs";
 
-export type AssetSource =
-  | "Acquire.com"
-  | "Microns.io"
-  | "Flippa"
-  | "SideProjectors"
-  | "CodeCanyon"
-  | "Gumroad / Lemon Squeezy";
-
-export type JobSource = GigSource | AssetSource;
+export type JobSource = GigSource;
 
 export type JobStatus = "New" | "Applied" | "Interviewing" | "Won" | "Skipped";
 
@@ -61,7 +53,7 @@ export interface TrackedJobData {
   updatedAt: string;
 }
 
-export type ViewMode = "categories" | "platforms" | "statuses" | "difficulty";
+export type ViewMode = "platforms" | "difficulty" | "statuses";
 
 export interface PlatformMeta {
   name: string;
