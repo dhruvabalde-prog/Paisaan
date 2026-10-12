@@ -14,8 +14,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Paisaan - VibeCoder DealFlow & Tracker Engine",
+  title: "Paisaan - DealFlow & Gigs Engine",
   description: "Next.js DealFlow & Fast Pitch Engine for Vibe Coders shipping 0-to-1 MVPs.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Paisaan",
+  },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-icon",
+  },
 };
 
 export default function RootLayout({
